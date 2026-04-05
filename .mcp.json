@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "anduin": {
+      "type": "url",
+      "url": "${ANDUIN_MCP_URL}"
+    }
+  }
+}
