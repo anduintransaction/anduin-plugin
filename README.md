@@ -5,7 +5,7 @@ Claude Code plugin for managing Anduin fund subscriptions and data rooms via the
 ## Features
 
 ### GP Assistant
-AI assistant for fund managers (General Partners) that helps with:
+AI assistant for fund managers (General Partners):
 - LP order review and subscription form inspection
 - Fund reporting and dashboard queries
 - Order tagging and cross-order analysis
@@ -23,22 +23,38 @@ AI assistant for virtual data room management:
 
 ## Installation
 
-### 1. Install the plugin
+### Option A: From Marketplace (recommended)
+
+Add the Anduin marketplace and install:
 
 ```bash
-claude plugin add /path/to/anduin-mcp-plugins
+claude marketplace add https://raw.githubusercontent.com/cmpham/anduin-plugin/main/marketplace.json
+claude plugin install anduin-plugin
 ```
 
-Or add to your project's `.claude/settings.json`:
-```json
-{
-  "plugins": ["/path/to/anduin-mcp-plugins"]
-}
+To update later:
+
+```bash
+claude marketplace update
 ```
 
-### 2. Configure the MCP server URL
+### Option B: From GitHub
 
-Set the `ANDUIN_MCP_URL` environment variable:
+```bash
+claude plugin add --source github cmpham/anduin-plugin
+```
+
+### Option C: Local (for development)
+
+```bash
+claude plugin add /path/to/anduin-plugin
+```
+
+## Configuration
+
+### Set the MCP server URL
+
+Set the `ANDUIN_MCP_URL` environment variable to point to your Anduin environment:
 
 ```bash
 # Production
@@ -47,39 +63,53 @@ export ANDUIN_MCP_URL="https://gondor-public.anduintransact.com/mcp"
 # Staging
 export ANDUIN_MCP_URL="https://mordor.anduin.dev/mcp"
 
-# Local development
+# Local development (HTTP only for local)
 export ANDUIN_MCP_URL="http://gondor-local.io:8080/mcp"
 ```
 
-Add to your shell profile for persistence.
+Add to your shell profile (`~/.zshrc` or `~/.bashrc`) for persistence.
 
-### 3. Verify connection
+### Verify connection
 
 Restart Claude Code and run `/mcp` to verify the `anduin` MCP server is connected.
 
 ## Usage
 
 ### Proactive triggering
-The agents activate automatically when you mention relevant topics:
-- "Review the LPs in my fund" triggers the GP Assistant
-- "Create a data room" triggers the Data Room Agent
-- "Check AML status for this investor" triggers the GP Assistant
 
-### Explicit invocation
-Use slash commands to invoke agents directly:
-- Ask about fund subscriptions, LP review, fund reports
-- Ask about data rooms, participants, file management
+The agents activate automatically when you mention relevant topics:
+
+- *"Review the LPs in my fund"* — triggers GP Assistant
+- *"Create a data room for the Series B deal"* — triggers Data Room Agent
+- *"Check AML status for this investor"* — triggers GP Assistant
+- *"Who has access to our deal room?"* — triggers Data Room Agent
+
+### Example tasks
+
+**GP Assistant:**
+- "Show me the fund report for Venture Fund III"
+- "Which LPs have incomplete forms?"
+- "Compare the commitment amounts across all LPs"
+- "Tag these orders as reviewed"
+- "Invite john@acme.com as a fund manager"
+
+**Data Room Agent:**
+- "List all my data rooms"
+- "Invite sarah@example.com as an Admin to the Acme data room"
+- "Organize the files into folders by document type"
+- "Show me the activity analytics for this data room"
 
 ## OAuth2 Authentication
 
 Authentication is handled automatically by Claude Code:
+
 1. On first use, a browser opens for Anduin login
 2. Approve the requested OAuth2 scopes
 3. Claude Code manages tokens (access + refresh) automatically
 
 No manual token configuration needed.
 
-## Available Scopes
+### Available scopes
 
 | Scope | Description |
 |-------|-------------|
@@ -87,6 +117,19 @@ No manual token configuration needed.
 | `fundsub:write` | Modify fund subscriptions |
 | `dataroom:read` | View data room contents |
 | `dataroom:write` | Modify data rooms |
+
+Scope hierarchy: `admin` implies `write` implies `read`.
+
+## Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| MCP server not found | Check `echo $ANDUIN_MCP_URL` is set, restart Claude Code |
+| 401 Unauthorized | Token expired — restart Claude Code to re-authenticate |
+| 403 Insufficient scopes | Re-authorize with broader scopes, or check with your admin |
+| Tools not appearing | Run `/mcp` to check connection; tools are filtered by your scopes |
+
+For detailed setup help, ask Claude: *"How do I set up the Anduin MCP connection?"*
 
 ## Plugin Structure
 
@@ -105,6 +148,11 @@ anduin-plugin/
 │   └── setup/
 │       └── SKILL.md         # MCP connection setup guide
 ├── .mcp.json                # MCP server configuration
-├── README.md
-└── .gitignore
+├── marketplace.json         # Marketplace distribution config
+├── LICENSE
+└── README.md
 ```
+
+## License
+
+MIT License. See [LICENSE](LICENSE) for details.
