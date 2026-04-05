@@ -28,7 +28,7 @@ AI assistant for virtual data room management:
 Add the Anduin marketplace and install:
 
 ```bash
-claude marketplace add https://raw.githubusercontent.com/cmpham/anduin-plugin/main/marketplace.json
+claude marketplace add https://raw.githubusercontent.com/anduintransaction/anduin-plugin/main/marketplace.json
 claude plugin install anduin-plugin
 ```
 
@@ -41,7 +41,7 @@ claude marketplace update
 ### Option B: From GitHub
 
 ```bash
-claude plugin add --source github cmpham/anduin-plugin
+claude plugin add --source github anduintransaction/anduin-plugin
 ```
 
 ### Option C: Local (for development)

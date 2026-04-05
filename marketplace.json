@@ -13,7 +13,7 @@
       "name": "anduin-plugin",
       "source": {
         "source": "github",
-        "repo": "cmpham/anduin-plugin",
+        "repo": "anduintransaction/anduin-plugin",
         "ref": "main"
       },
       "description": "Data room management and fund subscription review for the Anduin platform",
@@ -22,7 +22,7 @@
         "name": "Anduin Transactions",
         "url": "https://anduintransact.com"
       },
-      "repository": "https://github.com/cmpham/anduin-plugin",
+      "repository": "https://github.com/anduintransaction/anduin-plugin",
       "license": "MIT",
       "keywords": ["anduin", "dataroom", "fundsub", "fund-administration"],
       "category": "productivity"
