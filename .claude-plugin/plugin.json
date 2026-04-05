@@ -1,10 +1,10 @@
 {
-  "name": "anduin-mcp",
+  "name": "anduin-plugin",
   "version": "0.1.0",
-  "description": "Anduin MCP plugin for data room management and fund subscription review via Claude Code",
+  "description": "Anduin plugin for data room management and fund subscription review via Claude Code",
   "author": {
     "name": "Anduin Transactions",
     "url": "https://anduintransact.com"
   },
-  "keywords": ["anduin", "dataroom", "fundsub", "mcp", "fund-administration"]
+  "keywords": ["anduin", "dataroom", "fundsub", "fund-administration"]
 }

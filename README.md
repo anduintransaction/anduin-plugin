@@ -1,4 +1,4 @@
-# Anduin MCP Plugin for Claude Code
+# Anduin Plugin for Claude Code
 
 Claude Code plugin for managing Anduin fund subscriptions and data rooms via the Model Context Protocol (MCP).
 
@@ -91,7 +91,7 @@ No manual token configuration needed.
 ## Plugin Structure
 
 ```
-anduin-mcp-plugins/
+anduin-plugin/
 ├── .claude-plugin/
 │   └── plugin.json          # Plugin manifest
 ├── agents/
