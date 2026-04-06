@@ -28,8 +28,6 @@ For deal teams and anyone managing shared documents:
 
 ### Step 1: Install the plugin
 
-Choose one option:
-
 **From Marketplace (recommended):**
 ```bash
 claude marketplace add https://raw.githubusercontent.com/anduintransaction/anduin-plugin/main/marketplace.json
@@ -41,54 +39,31 @@ claude plugin install anduin-plugin
 claude plugin add --source github anduintransaction/anduin-plugin
 ```
 
-### Step 2: Set your Anduin server URL
+### Step 2: Connect to your Anduin server
 
-You need to tell the plugin which Anduin server to connect to. Pick the one that matches your environment:
+After installing, run the setup command:
 
-| Environment | URL |
+```
+/anduin-plugin:setup
+```
+
+Claude will ask which Anduin environment you use and configure everything automatically. Available environments:
+
+| Environment | Who it's for |
 |---|---|
-| **Production (US)** | `https://mcp.anduin.app/mcp` |
-| **Production (EU)** | `https://mcp.eu.anduin.app/mcp` |
-| **Staging** | `https://mcp-staging.anduin.dev/mcp` |
-| **Minas Tirith** (daily bounce) | `https://mcp-minas-tirith.anduin.dev/mcp` |
-| **Local dev** (developers only) | `http://gondor-local.io:8080/mcp` |
+| **Production (US)** | Most users — live Anduin platform |
+| **Production (EU)** | EU region users |
+| **Staging** | Internal testing |
+| **Minas Tirith** | Daily bounce server for QA |
+| **Local Development** | Developers running Anduin locally (Claude Code only) |
 
-<details>
-<summary><strong>Cowork users</strong> (desktop app)</summary>
+> If you skip this step, Claude will remind you to run setup when you start a new session.
 
-Set the environment variable in your system settings or shell profile, then restart the Cowork app.
-
-**macOS:** Add to `~/.zshrc`:
-```bash
-export ANDUIN_MCP_URL="https://mcp.anduin.app/mcp"
-```
-
-**Windows:** Set via System Properties > Environment Variables, or in PowerShell:
-```powershell
-[Environment]::SetEnvironmentVariable("ANDUIN_MCP_URL", "https://mcp.anduin.app/mcp", "User")
-```
-
-> **Note:** Cowork runs in the cloud, so only publicly accessible URLs work (Production, Staging, Minas Tirith). Local dev URLs will not work with Cowork.
-
-</details>
-
-<details>
-<summary><strong>Claude Code users</strong> (terminal)</summary>
-
-Add to your shell profile (`~/.zshrc` or `~/.bashrc`):
-```bash
-export ANDUIN_MCP_URL="https://mcp.anduin.app/mcp"
-```
-
-Then restart Claude Code and run `/mcp` to verify the `anduin` server is connected.
-
-All URLs work with Claude Code, including local dev.
-
-</details>
+After setup, restart the app for the change to take effect.
 
 ### Step 3: Sign in
 
-On first use, a browser window opens for you to sign in with your Anduin credentials. After that, authentication is handled automatically — no tokens or passwords to manage.
+On first use after restarting, a browser window opens for you to sign in with your Anduin credentials. After that, authentication is handled automatically — no tokens or passwords to manage.
 
 You'll be asked to approve access scopes:
 
@@ -121,15 +96,25 @@ Just describe what you need in plain language. The right assistant activates aut
 - *"Show me the activity analytics for this data room"*
 - *"Who has access to our deal room?"*
 
+## Changing Your Environment
+
+To switch to a different Anduin server (e.g., from staging to production), run:
+
+```
+/anduin-plugin:setup
+```
+
+Claude will update your configuration. Restart after switching.
+
 ## Troubleshooting
 
 | Problem | What to do |
 |---|---|
-| **Can't find the Anduin server** | Make sure `ANDUIN_MCP_URL` is set and restart the app. In Claude Code, run `echo $ANDUIN_MCP_URL` to check. |
+| **Can't find the Anduin server** | Run `/anduin-plugin:setup` to configure your server. |
 | **"Unauthorized" or login issues** | Your session may have expired. Restart the app to sign in again. |
 | **"Insufficient scopes" error** | You need broader permissions. Restart and approve additional scopes when prompted, or ask your admin for access. |
 | **Tools not showing up** | Check that the server is connected (in Claude Code: run `/mcp`). You only see tools matching your approved scopes. |
-| **Cowork: connection failed** | Only public URLs work with Cowork. Make sure you're not using a local dev URL. |
+| **Cowork: connection failed** | Only public URLs work with Cowork. Run `/anduin-plugin:setup` and pick a non-local environment. |
 
 Need help? Ask Claude: *"How do I set up the Anduin MCP connection?"*
 
@@ -150,6 +135,27 @@ claude marketplace update
 claude plugin add /path/to/anduin-plugin
 ```
 
+### Manual configuration (alternative to `/anduin-plugin:setup`)
+
+Set the `ANDUIN_MCP_URL` environment variable directly:
+
+```bash
+# Production (US)
+export ANDUIN_MCP_URL="https://mcp.anduin.app/mcp"
+
+# Production (EU)
+export ANDUIN_MCP_URL="https://mcp.eu.anduin.app/mcp"
+
+# Staging
+export ANDUIN_MCP_URL="https://mcp-staging.anduin.dev/mcp"
+
+# Minas Tirith (daily bounce)
+export ANDUIN_MCP_URL="https://mcp-minas-tirith.anduin.dev/mcp"
+
+# Local development
+export ANDUIN_MCP_URL="http://gondor-local.io:8080/mcp"
+```
+
 ### Plugin structure
 
 ```
@@ -159,13 +165,17 @@ anduin-plugin/
 ├── agents/
 │   ├── dataroom-agent.md    # Data Room autonomous agent
 │   └── gp-assistant.md      # GP Assistant autonomous agent
+├── hooks/
+│   ├── hooks.json           # SessionStart config detection
+│   └── scripts/
+│       └── check-config.sh  # Checks if MCP URL is configured
 ├── skills/
 │   ├── dataroom/
 │   │   └── SKILL.md         # Data Room domain knowledge
 │   ├── gp-assistant/
 │   │   └── SKILL.md         # GP Assistant domain knowledge
 │   └── setup/
-│       └── SKILL.md         # MCP connection setup guide
+│       └── SKILL.md         # Interactive setup (/anduin-plugin:setup)
 ├── .mcp.json                # MCP server configuration
 ├── marketplace.json         # Marketplace distribution config
 ├── LICENSE
