@@ -29,15 +29,14 @@ For deal teams and anyone managing shared documents:
 ### Step 1: Install the plugin
 
 **From Marketplace (recommended):**
-```bash
-claude marketplace add https://raw.githubusercontent.com/anduintransaction/anduin-plugin/main/marketplace.json
-claude plugin install anduin
+
+Run these commands inside Claude Code or Cowork:
+```
+/plugin marketplace add anduintransaction/anduin-plugin
+/plugin install anduin@anduin-marketplace
 ```
 
-**From GitHub:**
-```bash
-claude plugin add --source github anduintransaction/anduin-plugin
-```
+Or add the marketplace via the Plugins UI (click **+** next to Marketplaces).
 
 ### Step 2: Connect to your Anduin server
 
@@ -120,8 +119,9 @@ Need help? Ask Claude: *"How do I set up the Anduin MCP connection?"*
 
 ## Updating
 
-```bash
-claude marketplace update
+Run inside Claude Code or Cowork:
+```
+/plugin marketplace update
 ```
 
 ## For Developers
@@ -131,8 +131,8 @@ claude marketplace update
 
 ### Local installation
 
-```bash
-claude plugin add /path/to/anduin-plugin
+```
+/plugin add /path/to/anduin-plugin
 ```
 
 ### Manual configuration (alternative to `/anduin:setup`)
