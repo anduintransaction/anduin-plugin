@@ -122,7 +122,7 @@ To revert to Production US, just reinstall the plugin — it will restore the de
 ### Local installation
 
 ```
-/plugin add /path/to/anduin-plugin
+/plugin add ./plugins/anduin
 ```
 
 ### Plugin structure
@@ -130,17 +130,19 @@ To revert to Production US, just reinstall the plugin — it will restore the de
 ```
 anduin-plugin/
 ├── .claude-plugin/
-│   └── plugin.json          # Plugin manifest
-├── agents/
-│   ├── dataroom-agent.md    # Data Room autonomous agent
-│   └── gp-assistant.md      # GP Assistant autonomous agent
-├── skills/
-│   ├── dataroom/
-│   │   └── SKILL.md         # Data Room domain knowledge
-│   └── gp-assistant/
-│       └── SKILL.md         # GP Assistant domain knowledge
-├── .mcp.json                # MCP server config (Production US)
-├── marketplace.json         # Marketplace distribution config
+│   └── marketplace.json         # Marketplace manifest
+├── plugins/anduin/
+│   ├── .claude-plugin/
+│   │   └── plugin.json          # Plugin manifest
+│   ├── .mcp.json                # MCP server config (Production US)
+│   ├── agents/
+│   │   ├── dataroom-agent.md    # Data Room autonomous agent
+│   │   └── gp-assistant.md      # GP Assistant autonomous agent
+│   └── skills/
+│       ├── dataroom/
+│       │   └── SKILL.md         # Data Room domain knowledge
+│       └── gp-assistant/
+│           └── SKILL.md         # GP Assistant domain knowledge
 ├── LICENSE
 └── README.md
 ```
