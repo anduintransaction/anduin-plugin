@@ -28,15 +28,17 @@ For deal teams and anyone managing shared documents:
 
 ### Step 1: Install the plugin
 
-**From Marketplace (recommended):**
+**Cowork (desktop app):**
+1. Open the Plugins panel (left sidebar)
+2. Click **+** next to **Marketplaces**
+3. Enter `anduintransaction/anduin-plugin` and click **Sync**
+4. Find **anduin** in the plugin list and enable it
 
-Run these commands inside Claude Code or Cowork:
+**Claude Code (terminal):**
 ```
 /plugin marketplace add anduintransaction/anduin-plugin
 /plugin install anduin@anduin-marketplace
 ```
-
-Or add the marketplace via the Plugins UI (click **+** next to Marketplaces).
 
 ### Step 2: Connect to your Anduin server
 
