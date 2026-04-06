@@ -1,5 +1,5 @@
 ---
-name: Anduin GP Assistant
+name: gp-assistant
 description: Use when the user asks about fund subscriptions, LP review, fund administration, investor onboarding, subscription forms, AML/KYC checks, fund manager invitations, fund reports, order dashboards, or any GP (General Partner) fund management task. Provides terminology, tool chaining rules, and workflow patterns for Anduin fund subscription operations via MCP.
 ---
 

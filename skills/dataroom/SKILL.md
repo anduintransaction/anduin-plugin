@@ -1,5 +1,5 @@
 ---
-name: Anduin Data Room
+name: dataroom
 description: Use when the user asks about virtual data rooms, VDRs, deal rooms, document sharing, data room participants, file management in data rooms, data room analytics or insights. Provides terminology, tool chaining rules, and workflow patterns for Anduin Data Room operations via MCP.
 ---
 
