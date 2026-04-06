@@ -8,7 +8,7 @@ A Claude Code plugin that provides AI assistants for two Anduin platform domains
 - **GP Assistant** — fund subscription management (LP review, forms, AML/KYC, dashboards, tagging)
 - **Data Room Agent** — virtual data room management (rooms, participants, files, analytics)
 
-The plugin connects to Anduin's MCP server (configured via `ANDUIN_MCP_URL` env var) and uses OAuth2 for authentication. It works on both Claude Code (CLI) and Cowork (desktop app).
+The plugin connects to Anduin's MCP server (hardcoded to Production US by default) and uses OAuth2 for authentication. It works on both Claude Code (CLI) and Cowork (desktop app) with no setup required.
 
 ## Local Development
 
@@ -30,12 +30,12 @@ Since this is a content-only plugin with no test suite, verify manually:
 /plugin add .
 
 # Verify skills load
-/anduin:setup           # Should show the setup wizard
+/anduin:setup           # Should show environment switching options
 /anduin:gp-assistant    # Should load GP domain knowledge
 /anduin:dataroom        # Should load Data Room domain knowledge
 
-# Verify hook fires on session start
-bash hooks/scripts/check-config.sh   # Should warn if ANDUIN_MCP_URL is unset
+# Verify MCP connects
+# After reinstall, check /mcp — "anduin" should appear pointing to Production US
 ```
 
 ## Plugin Architecture
@@ -45,7 +45,7 @@ This is a **content-only plugin** — no build step, no dependencies, no tests. 
 ```
 .claude-plugin/plugin.json   — Plugin manifest (name, version, description)
 .claude-plugin/marketplace.json — Copy of marketplace.json for Cowork discovery
-.mcp.json                    — MCP server config (uses $ANDUIN_MCP_URL)
+.mcp.json                    — MCP server config (hardcoded to Production US)
 marketplace.json             — Marketplace distribution metadata
 
 agents/                      — Autonomous agent definitions (spawned as subagents)
@@ -53,20 +53,18 @@ agents/                      — Autonomous agent definitions (spawned as subage
   dataroom-agent.md          — Data room agent (model: sonnet, tools: mcp__anduin__*)
 
 skills/                      — Domain knowledge loaded into context on demand
-  setup/SKILL.md             — Interactive setup wizard (/anduin:setup)
+  setup/SKILL.md             — Environment switching for advanced users (/anduin:setup)
   gp-assistant/SKILL.md      — GP domain terminology, tool catalog, workflows
   dataroom/SKILL.md          — Data room domain terminology, tool catalog, workflows
-
-hooks/
-  hooks.json                 — SessionStart hook config
-  scripts/check-config.sh    — Warns if ANDUIN_MCP_URL is unset
 ```
 
 **Key pattern:** Each domain (GP, Data Room) has both an agent (`.md` in `agents/`) and a skill (`.md` in `skills/`). The agent defines behavior, model, and tool access. The skill provides domain knowledge that gets loaded into context. The agent references MCP tools prefixed `dr_` (data room) or unprefixed (fund subscription).
 
-## MCP Server Environments
+## MCP Server Configuration
 
-See `skills/setup/SKILL.md` or README.md for the full environment URL table. The setup skill (`/anduin:setup`) handles configuration interactively.
+The `.mcp.json` hardcodes the Production US URL (`https://mcp.anduin.app/mcp`). This means the plugin works out of the box for both Cowork and Claude Code — no environment variables or setup needed.
+
+Advanced users (developers) can switch to a different environment using `/anduin:setup`, which updates their user-level MCP config. See `skills/setup/SKILL.md` for the full environment URL table.
 
 ## Development Notes
 
@@ -74,7 +72,6 @@ See `skills/setup/SKILL.md` or README.md for the full environment URL table. The
 - Plugin name is `anduin` (in plugin.json). Marketplace name is `anduin-marketplace`.
 - Agent frontmatter fields: `name`, `description` (with examples), `model`, `color`, `tools`.
 - Skill frontmatter fields: `name`, `description`, and optionally `argument-hint`, `allowed-tools`.
-- The `.mcp.json` uses `${ANDUIN_MCP_URL}` env var substitution — the URL is not hardcoded.
 - OAuth2 scopes: `fundsub:read/write/admin`, `dataroom:read/write/admin`. Scope hierarchy: admin > write > read.
 - MCP tools are filtered by the user's approved OAuth2 scopes at runtime.
 - Cowork only supports public URLs (not local dev).
