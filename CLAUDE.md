@@ -30,7 +30,6 @@ Since this is a content-only plugin with no test suite, verify manually:
 /plugin add .
 
 # Verify skills load
-/anduin:setup           # Should show environment switching options
 /anduin:gp-assistant    # Should load GP domain knowledge
 /anduin:dataroom        # Should load Data Room domain knowledge
 
@@ -53,7 +52,6 @@ agents/                      — Autonomous agent definitions (spawned as subage
   dataroom-agent.md          — Data room agent (model: sonnet, tools: mcp__anduin__*)
 
 skills/                      — Domain knowledge loaded into context on demand
-  setup/SKILL.md             — Environment switching for advanced users (/anduin:setup)
   gp-assistant/SKILL.md      — GP domain terminology, tool catalog, workflows
   dataroom/SKILL.md          — Data room domain terminology, tool catalog, workflows
 ```
@@ -64,7 +62,22 @@ skills/                      — Domain knowledge loaded into context on demand
 
 The `.mcp.json` hardcodes the Production US URL (`https://mcp.anduin.app/mcp`). This means the plugin works out of the box for both Cowork and Claude Code — no environment variables or setup needed.
 
-Advanced users (developers) can switch to a different environment using `/anduin:setup`, which updates their user-level MCP config. See `skills/setup/SKILL.md` for the full environment URL table.
+Advanced users (developers) can switch to a different environment by removing and re-adding the MCP server manually:
+
+```bash
+claude mcp remove anduin
+claude mcp add --transport http anduin <environment-url>
+```
+
+Available environments:
+
+| Environment | URL |
+|---|---|
+| Production (US) *(default)* | `https://mcp.anduin.app/mcp` |
+| Production (EU) | `https://mcp.eu.anduin.app/mcp` |
+| Staging | `https://mcp-staging.anduin.dev/mcp` |
+| Minas Tirith (daily bounce) | `https://minas-tirith.anduin.dev/mcp` |
+| Local Development | `http://gondor-local.io:8080/mcp` |
 
 ## Development Notes
 

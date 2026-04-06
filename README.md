@@ -100,27 +100,24 @@ Run inside Claude Code or Cowork:
 
 ### Switching environments
 
-The plugin defaults to Production (US). To connect to a different environment, run:
+The plugin defaults to Production (US). To connect to a different environment, remove and re-add the MCP server in Claude Code:
 
-```
-/anduin:setup
+```bash
+claude mcp remove anduin
+claude mcp add --transport http anduin <environment-url>
 ```
 
-This is a Claude Code-only feature. Available environments:
+Available environments:
 
 | Environment | URL |
 |---|---|
 | Production (US) *(default)* | `https://mcp.anduin.app/mcp` |
 | Production (EU) | `https://mcp.eu.anduin.app/mcp` |
 | Staging | `https://mcp-staging.anduin.dev/mcp` |
-| Minas Tirith (daily bounce) | `https://mcp-minas-tirith.anduin.dev/mcp` |
+| Minas Tirith (daily bounce) | `https://minas-tirith.anduin.dev/mcp` |
 | Local Development | `http://gondor-local.io:8080/mcp` |
 
-Or set the `ANDUIN_MCP_URL` environment variable manually and update your `~/.claude.json` MCP config:
-
-```bash
-export ANDUIN_MCP_URL="https://mcp-staging.anduin.dev/mcp"
-```
+To revert to Production US, just reinstall the plugin — it will restore the default.
 
 ### Local installation
 
@@ -140,10 +137,8 @@ anduin-plugin/
 ├── skills/
 │   ├── dataroom/
 │   │   └── SKILL.md         # Data Room domain knowledge
-│   ├── gp-assistant/
-│   │   └── SKILL.md         # GP Assistant domain knowledge
-│   └── setup/
-│       └── SKILL.md         # Environment switching (advanced)
+│   └── gp-assistant/
+│       └── SKILL.md         # GP Assistant domain knowledge
 ├── .mcp.json                # MCP server config (Production US)
 ├── marketplace.json         # Marketplace distribution config
 ├── LICENSE
