@@ -2,19 +2,14 @@
   "name": "anduin-marketplace",
   "description": "Anduin plugin marketplace for Claude",
   "owner": {
-    "name": "Anduin Transactions",
-    "email": "engineering@anduintransact.com"
+    "name": "Anduin Transactions"
   },
   "plugins": [
     {
       "name": "anduin",
+      "source": "./plugins/anduin",
       "description": "Data room management and fund subscription review for the Anduin platform",
-      "source": {
-        "source": "github",
-        "repo": "anduintransaction/anduin-plugin"
-      },
-      "category": "productivity",
-      "homepage": "https://github.com/anduintransaction/anduin-plugin"
+      "version": "0.2.0"
     }
   ]
 }
