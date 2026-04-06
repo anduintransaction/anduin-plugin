@@ -1,8 +1,6 @@
 {
-  "mcpServers": {
-    "anduin": {
-      "type": "url",
-      "url": "https://mcp.anduin.app/mcp"
-    }
+  "anduin": {
+    "type": "url",
+    "url": "https://mcp.anduin.app/mcp"
   }
 }
