@@ -42,18 +42,17 @@ Since this is a content-only plugin with no test suite, verify manually:
 This is a **content-only plugin** — no build step, no dependencies, no tests. All files are markdown or JSON.
 
 ```
-.claude-plugin/plugin.json   — Plugin manifest (name, version, description)
-.claude-plugin/marketplace.json — Copy of marketplace.json for Cowork discovery
-.mcp.json                    — MCP server config (hardcoded to Production US)
-marketplace.json             — Marketplace distribution metadata
+.claude-plugin/marketplace.json       — Marketplace manifest (lists all plugins)
 
-agents/                      — Autonomous agent definitions (spawned as subagents)
-  gp-assistant.md            — Fund subscription agent (model: sonnet, tools: mcp__anduin__*)
-  dataroom-agent.md          — Data room agent (model: sonnet, tools: mcp__anduin__*)
-
-skills/                      — Domain knowledge loaded into context on demand
-  gp-assistant/SKILL.md      — GP domain terminology, tool catalog, workflows
-  dataroom/SKILL.md          — Data room domain terminology, tool catalog, workflows
+plugins/anduin/                       — Anduin platform plugin
+  .claude-plugin/plugin.json          — Plugin manifest (name, version, description)
+  .mcp.json                           — MCP server config (hardcoded to Production US)
+  agents/                             — Autonomous agent definitions (spawned as subagents)
+    gp-assistant.md                   — Fund subscription agent (model: sonnet, tools: mcp__anduin__*)
+    dataroom-agent.md                 — Data room agent (model: sonnet, tools: mcp__anduin__*)
+  skills/                             — Domain knowledge loaded into context on demand
+    gp-assistant/SKILL.md             — GP domain terminology, tool catalog, workflows
+    dataroom/SKILL.md                 — Data room domain terminology, tool catalog, workflows
 ```
 
 **Key pattern:** Each domain (GP, Data Room) has both an agent (`.md` in `agents/`) and a skill (`.md` in `skills/`). The agent defines behavior, model, and tool access. The skill provides domain knowledge that gets loaded into context. The agent references MCP tools prefixed `dr_` (data room) or unprefixed (fund subscription).
