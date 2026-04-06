@@ -1,31 +1,17 @@
 {
   "name": "anduin-marketplace",
+  "description": "Anduin plugin marketplace for Claude",
   "owner": {
     "name": "Anduin Transactions",
     "email": "engineering@anduintransact.com"
   },
-  "metadata": {
-    "description": "Official Anduin plugin marketplace for Claude Code",
-    "version": "1.0.0"
-  },
   "plugins": [
     {
       "name": "anduin",
-      "source": {
-        "source": "github",
-        "repo": "anduintransaction/anduin-plugin",
-        "ref": "main"
-      },
       "description": "Data room management and fund subscription review for the Anduin platform",
-      "version": "0.1.0",
-      "author": {
-        "name": "Anduin Transactions",
-        "url": "https://anduintransact.com"
-      },
-      "repository": "https://github.com/anduintransaction/anduin-plugin",
-      "license": "MIT",
-      "keywords": ["anduin", "dataroom", "fundsub", "fund-administration"],
-      "category": "productivity"
+      "source": ".",
+      "category": "productivity",
+      "homepage": "https://github.com/anduintransaction/anduin-plugin"
     }
   ]
 }
