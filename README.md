@@ -57,11 +57,17 @@ claude plugin add /path/to/anduin-plugin
 Set the `ANDUIN_MCP_URL` environment variable to point to your Anduin environment:
 
 ```bash
-# Production
-export ANDUIN_MCP_URL="https://gondor-public.anduintransact.com/mcp"
+# Production (US)
+export ANDUIN_MCP_URL="https://mcp.anduin.app/mcp"
+
+# Production (EU)
+export ANDUIN_MCP_URL="https://mcp.eu.anduin.app/mcp"
 
 # Staging
-export ANDUIN_MCP_URL="https://mordor.anduin.dev/mcp"
+export ANDUIN_MCP_URL="https://mcp-staging.anduin.dev/mcp"
+
+# Minas Tirith (daily bounce)
+export ANDUIN_MCP_URL="https://mcp-minas-tirith.anduin.dev/mcp"
 
 # Local development (HTTP only for local)
 export ANDUIN_MCP_URL="http://gondor-local.io:8080/mcp"

@@ -43,6 +43,7 @@ All tools require OAuth2 scope `fundsub:read` or `fundsub:write`.
 - `get_required_docs` — required documents checklist
 - `get_form_markdown` — form content rendered as markdown
 - `get_form_comments` — comments on form fields
+- `draft_comment` — draft a comment on a form field (fundsub:write)
 - `get_aml_check` — AML check results
 - `get_aml_kyc_doc_groups` — AML/KYC document group configuration
 

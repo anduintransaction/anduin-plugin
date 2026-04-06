@@ -17,14 +17,24 @@ description: Use when the user asks how to set up, configure, or connect to the 
 
 The plugin connects to the Anduin MCP server via the `ANDUIN_MCP_URL` environment variable. Set it to your environment's MCP endpoint:
 
-**Production:**
+**Production (US):**
 ```bash
-export ANDUIN_MCP_URL="https://gondor-public.anduintransact.com/mcp"
+export ANDUIN_MCP_URL="https://mcp.anduin.app/mcp"
 ```
 
-**Staging/Feature:**
+**Production (EU):**
 ```bash
-export ANDUIN_MCP_URL="https://mordor.anduin.dev/mcp"
+export ANDUIN_MCP_URL="https://mcp.eu.anduin.app/mcp"
+```
+
+**Staging:**
+```bash
+export ANDUIN_MCP_URL="https://mcp-staging.anduin.dev/mcp"
+```
+
+**Minas Tirith (daily bounce):**
+```bash
+export ANDUIN_MCP_URL="https://mcp-minas-tirith.anduin.dev/mcp"
 ```
 
 **Local Development:**
