@@ -9,7 +9,7 @@
     {
       "name": "anduin",
       "description": "Data room management and fund subscription review for the Anduin platform",
-      "source": ".",
+      "source": "./",
       "category": "productivity",
       "homepage": "https://github.com/anduintransaction/anduin-plugin"
     }
