@@ -38,31 +38,11 @@ Follow [Anthropic's guide to using plugins in Cowork](https://support.claude.com
 /plugin install anduin@anduin-marketplace
 ```
 
-### Step 2: Connect to your Anduin server
+### Step 2: Sign in
 
-After installing, run the setup command:
+After installing, restart the app. On first use, a browser window opens for you to sign in with your Anduin credentials. After that, authentication is handled automatically — no tokens or passwords to manage.
 
-```
-/anduin:setup
-```
-
-Claude will ask which Anduin environment you use and configure everything automatically. Available environments:
-
-| Environment | Who it's for |
-|---|---|
-| **Production (US)** | Most users — live Anduin platform |
-| **Production (EU)** | EU region users |
-| **Staging** | Internal testing |
-| **Minas Tirith** | Daily bounce server for QA |
-| **Local Development** | Developers running Anduin locally (Claude Code only) |
-
-> If you skip this step, Claude will remind you to run setup when you start a new session.
-
-After setup, restart the app for the change to take effect.
-
-### Step 3: Sign in
-
-On first use after restarting, a browser window opens for you to sign in with your Anduin credentials. After that, authentication is handled automatically — no tokens or passwords to manage.
+The plugin connects to **Anduin Production (US)** by default. No additional setup is needed.
 
 You'll be asked to approve access scopes:
 
@@ -95,27 +75,16 @@ Just describe what you need in plain language. The right assistant activates aut
 - *"Show me the activity analytics for this data room"*
 - *"Who has access to our deal room?"*
 
-## Changing Your Environment
-
-To switch to a different Anduin server (e.g., from staging to production), run:
-
-```
-/anduin:setup
-```
-
-Claude will update your configuration. Restart after switching.
-
 ## Troubleshooting
 
 | Problem | What to do |
 |---|---|
-| **Can't find the Anduin server** | Run `/anduin:setup` to configure your server. |
+| **Anduin MCP not showing** | Reinstall the plugin and restart the app. |
 | **"Unauthorized" or login issues** | Your session may have expired. Restart the app to sign in again. |
 | **"Insufficient scopes" error** | You need broader permissions. Restart and approve additional scopes when prompted, or ask your admin for access. |
 | **Tools not showing up** | Check that the server is connected (in Claude Code: run `/mcp`). You only see tools matching your approved scopes. |
-| **Cowork: connection failed** | Only public URLs work with Cowork. Run `/anduin:setup` and pick a non-local environment. |
 
-Need help? Ask Claude: *"How do I set up the Anduin MCP connection?"*
+Need help? Ask Claude: *"How do I connect to Anduin?"*
 
 ## Updating
 
@@ -127,33 +96,36 @@ Run inside Claude Code or Cowork:
 ## For Developers
 
 <details>
-<summary>Plugin structure and local development</summary>
+<summary>Advanced configuration, plugin structure, and local development</summary>
+
+### Switching environments
+
+The plugin defaults to Production (US). To connect to a different environment, run:
+
+```
+/anduin:setup
+```
+
+This is a Claude Code-only feature. Available environments:
+
+| Environment | URL |
+|---|---|
+| Production (US) *(default)* | `https://mcp.anduin.app/mcp` |
+| Production (EU) | `https://mcp.eu.anduin.app/mcp` |
+| Staging | `https://mcp-staging.anduin.dev/mcp` |
+| Minas Tirith (daily bounce) | `https://mcp-minas-tirith.anduin.dev/mcp` |
+| Local Development | `http://gondor-local.io:8080/mcp` |
+
+Or set the `ANDUIN_MCP_URL` environment variable manually and update your `~/.claude.json` MCP config:
+
+```bash
+export ANDUIN_MCP_URL="https://mcp-staging.anduin.dev/mcp"
+```
 
 ### Local installation
 
 ```
 /plugin add /path/to/anduin-plugin
-```
-
-### Manual configuration (alternative to `/anduin:setup`)
-
-Set the `ANDUIN_MCP_URL` environment variable directly:
-
-```bash
-# Production (US)
-export ANDUIN_MCP_URL="https://mcp.anduin.app/mcp"
-
-# Production (EU)
-export ANDUIN_MCP_URL="https://mcp.eu.anduin.app/mcp"
-
-# Staging
-export ANDUIN_MCP_URL="https://mcp-staging.anduin.dev/mcp"
-
-# Minas Tirith (daily bounce)
-export ANDUIN_MCP_URL="https://mcp-minas-tirith.anduin.dev/mcp"
-
-# Local development
-export ANDUIN_MCP_URL="http://gondor-local.io:8080/mcp"
 ```
 
 ### Plugin structure
@@ -165,18 +137,14 @@ anduin-plugin/
 ├── agents/
 │   ├── dataroom-agent.md    # Data Room autonomous agent
 │   └── gp-assistant.md      # GP Assistant autonomous agent
-├── hooks/
-│   ├── hooks.json           # SessionStart config detection
-│   └── scripts/
-│       └── check-config.sh  # Checks if MCP URL is configured
 ├── skills/
 │   ├── dataroom/
 │   │   └── SKILL.md         # Data Room domain knowledge
 │   ├── gp-assistant/
 │   │   └── SKILL.md         # GP Assistant domain knowledge
 │   └── setup/
-│       └── SKILL.md         # Interactive setup (/anduin:setup)
-├── .mcp.json                # MCP server configuration
+│       └── SKILL.md         # Environment switching (advanced)
+├── .mcp.json                # MCP server config (Production US)
 ├── marketplace.json         # Marketplace distribution config
 ├── LICENSE
 └── README.md
@@ -187,7 +155,7 @@ anduin-plugin/
 | Platform | Supported | Notes |
 |---|---|---|
 | Claude Code (terminal) | Yes | All server URLs work, including local dev |
-| Cowork (desktop app) | Yes | Only publicly accessible server URLs |
+| Cowork (desktop app) | Yes | Connects to Production automatically |
 
 </details>
 

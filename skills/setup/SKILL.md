@@ -1,6 +1,6 @@
 ---
 name: setup
-description: Set up the Anduin MCP server connection. Run this to configure which Anduin environment to connect to (Production, Staging, Minas Tirith, or Local Dev). Also use when the user encounters MCP connection errors, OAuth2 authentication issues, or asks how to change the Anduin server URL.
+description: "Advanced: switch the Anduin MCP server to a non-production environment (EU, Staging, Minas Tirith, Local Dev). By default the plugin connects to Anduin Production (US) with no setup needed. Use this when the user wants to change environments, or encounters MCP connection or OAuth2 issues."
 argument-hint: "[environment]"
 allowed-tools:
   - Bash
@@ -9,16 +9,21 @@ allowed-tools:
   - Write
 ---
 
-# Anduin MCP Setup
+# Anduin Environment Setup (Advanced)
 
-You are guiding the user through connecting the Anduin plugin to their Anduin server. Follow these steps in order.
+The plugin connects to **Anduin Production (US)** by default — no configuration needed. This skill is for advanced users (typically developers) who need to switch to a different environment.
+
+**Important:** This only works in **Claude Code** (CLI). Cowork users connect to Production automatically.
 
 ## Step 1: Check current configuration
 
-Run `echo $ANDUIN_MCP_URL` to see if a server URL is already configured.
+Check if the user has a custom environment configured:
 
-- If set: tell the user which environment they're connected to (match URL against the table below) and ask if they want to change it.
-- If empty: tell the user the plugin is not configured yet and proceed to Step 2.
+1. Run `echo $ANDUIN_MCP_URL` to check for an env var override
+2. Read the plugin's `.mcp.json` to see the current URL
+
+- If `ANDUIN_MCP_URL` is set: tell the user which environment they're connected to (match URL against the table below) and ask if they want to change it.
+- If not set: tell the user they're using the default (Production US) and ask which environment they want to switch to.
 
 ## Step 2: Ask which environment
 
@@ -26,7 +31,7 @@ If the user provided an environment as an argument (e.g., `/anduin:setup staging
 
 | Choice | Environment | URL |
 |---|---|---|
-| 1 | Production (US) | `https://mcp.anduin.app/mcp` |
+| 1 | Production (US) *(default)* | `https://mcp.anduin.app/mcp` |
 | 2 | Production (EU) | `https://mcp.eu.anduin.app/mcp` |
 | 3 | Staging | `https://mcp-staging.anduin.dev/mcp` |
 | 4 | Minas Tirith (daily bounce) | `https://mcp-minas-tirith.anduin.dev/mcp` |
@@ -34,7 +39,7 @@ If the user provided an environment as an argument (e.g., `/anduin:setup staging
 
 Keyword mapping (case-insensitive): "prod"/"production"/"us" -> 1, "eu" -> 2, "staging"/"internal" -> 3, "minas"/"minas-tirith"/"daily" -> 4, "local"/"dev" -> 5.
 
-If the user is on Cowork, note that only options 1-4 work (Local Development requires direct network access).
+If the user picks Production (US), tell them that's already the default — no changes needed. They can remove any existing `ANDUIN_MCP_URL` from their shell profile to revert to default.
 
 ## Step 3: Write to shell profile
 
@@ -50,29 +55,58 @@ If the user is on Cowork, note that only options 1-4 work (Local Development req
    - Tell the user you updated the existing setting
 
 4. If no existing line:
-   - Use the Edit tool or Bash to append these two lines to the end of the file:
+   - Append to the end of the file:
      ```
-     # Anduin MCP server
+     # Anduin MCP server (overrides plugin default of Production US)
      export ANDUIN_MCP_URL="<chosen-url>"
      ```
-   - Tell the user you added the setting
 
-## Step 4: Confirm and instruct restart
+## Step 4: Update local MCP config
+
+The plugin's `.mcp.json` hardcodes Production US. To override it for this user, add the custom URL to their user-level MCP settings:
+
+1. Read `~/.claude.json` (create if it doesn't exist)
+2. Add or update the `anduin` entry under `mcpServers`:
+   ```json
+   {
+     "mcpServers": {
+       "anduin": {
+         "type": "url",
+         "url": "<chosen-url>"
+       }
+     }
+   }
+   ```
+3. Merge carefully — don't overwrite existing MCP entries in the file.
+
+## Step 5: Confirm and instruct restart
 
 Tell the user:
 
 > Your Anduin server is now configured for **[environment name]**.
 >
-> Please restart Claude Code (or Cowork) for the change to take effect. After restarting, a browser window will open for you to sign in with your Anduin credentials.
+> **To activate the change:**
+> 1. Close this Claude Code session
+> 2. Open a **new terminal window** (so your shell loads the updated config)
+> 3. Start Claude Code from that new terminal
+>
+> After restarting, the Anduin MCP will connect to **[environment name]** and a browser window will open for you to sign in.
+>
+> To revert to Production US, remove the `ANDUIN_MCP_URL` line from your shell profile and the `anduin` entry from `~/.claude.json`, then restart.
 
 ## Troubleshooting
 
-If the user reports issues after setup, help with these:
+If the user reports issues, help with these:
+
+### Anduin MCP not showing in `/mcp`
+- The plugin hardcodes Production US, so the MCP should always appear after install
+- If missing: reinstall the plugin (`/plugin install anduin@anduin-marketplace`)
+- If using a custom environment: check that `~/.claude.json` has the correct `anduin` MCP entry
 
 ### "MCP server not found" or connection errors
-- Verify the URL is set: `echo $ANDUIN_MCP_URL`
-- Check reachability: `curl -s -o /dev/null -w "%{http_code}" $ANDUIN_MCP_URL/.well-known/oauth-protected-resource`
-- If using Cowork with a local dev URL, explain that Cowork only works with public URLs
+- Check reachability: `curl -s -o /dev/null -w "%{http_code}" https://mcp.anduin.app/mcp/.well-known/oauth-protected-resource`
+- If using a custom URL: `curl -s -o /dev/null -w "%{http_code}" $ANDUIN_MCP_URL/.well-known/oauth-protected-resource`
+- Local Development URLs only work in Claude Code (not Cowork)
 
 ### "Unauthorized" or 401 errors
 - Session may have expired — restart to trigger a fresh sign-in

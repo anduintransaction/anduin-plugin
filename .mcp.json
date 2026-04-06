@@ -2,7 +2,7 @@
   "mcpServers": {
     "anduin": {
       "type": "url",
-      "url": "${ANDUIN_MCP_URL}"
+      "url": "https://mcp.anduin.app/mcp"
     }
   }
 }
