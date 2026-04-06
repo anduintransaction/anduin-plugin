@@ -10,7 +10,7 @@
   },
   "plugins": [
     {
-      "name": "anduin-plugin",
+      "name": "anduin",
       "source": {
         "source": "github",
         "repo": "anduintransaction/anduin-plugin",

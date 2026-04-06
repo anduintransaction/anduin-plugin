@@ -31,7 +31,7 @@ For deal teams and anyone managing shared documents:
 **From Marketplace (recommended):**
 ```bash
 claude marketplace add https://raw.githubusercontent.com/anduintransaction/anduin-plugin/main/marketplace.json
-claude plugin install anduin-plugin
+claude plugin install anduin
 ```
 
 **From GitHub:**
@@ -44,7 +44,7 @@ claude plugin add --source github anduintransaction/anduin-plugin
 After installing, run the setup command:
 
 ```
-/anduin-plugin:setup
+/anduin:setup
 ```
 
 Claude will ask which Anduin environment you use and configure everything automatically. Available environments:
@@ -101,7 +101,7 @@ Just describe what you need in plain language. The right assistant activates aut
 To switch to a different Anduin server (e.g., from staging to production), run:
 
 ```
-/anduin-plugin:setup
+/anduin:setup
 ```
 
 Claude will update your configuration. Restart after switching.
@@ -110,11 +110,11 @@ Claude will update your configuration. Restart after switching.
 
 | Problem | What to do |
 |---|---|
-| **Can't find the Anduin server** | Run `/anduin-plugin:setup` to configure your server. |
+| **Can't find the Anduin server** | Run `/anduin:setup` to configure your server. |
 | **"Unauthorized" or login issues** | Your session may have expired. Restart the app to sign in again. |
 | **"Insufficient scopes" error** | You need broader permissions. Restart and approve additional scopes when prompted, or ask your admin for access. |
 | **Tools not showing up** | Check that the server is connected (in Claude Code: run `/mcp`). You only see tools matching your approved scopes. |
-| **Cowork: connection failed** | Only public URLs work with Cowork. Run `/anduin-plugin:setup` and pick a non-local environment. |
+| **Cowork: connection failed** | Only public URLs work with Cowork. Run `/anduin:setup` and pick a non-local environment. |
 
 Need help? Ask Claude: *"How do I set up the Anduin MCP connection?"*
 
@@ -135,7 +135,7 @@ claude marketplace update
 claude plugin add /path/to/anduin-plugin
 ```
 
-### Manual configuration (alternative to `/anduin-plugin:setup`)
+### Manual configuration (alternative to `/anduin:setup`)
 
 Set the `ANDUIN_MCP_URL` environment variable directly:
 
@@ -175,7 +175,7 @@ anduin-plugin/
 │   ├── gp-assistant/
 │   │   └── SKILL.md         # GP Assistant domain knowledge
 │   └── setup/
-│       └── SKILL.md         # Interactive setup (/anduin-plugin:setup)
+│       └── SKILL.md         # Interactive setup (/anduin:setup)
 ├── .mcp.json                # MCP server configuration
 ├── marketplace.json         # Marketplace distribution config
 ├── LICENSE

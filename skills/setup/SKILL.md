@@ -22,7 +22,7 @@ Run `echo $ANDUIN_MCP_URL` to see if a server URL is already configured.
 
 ## Step 2: Ask which environment
 
-If the user provided an environment as an argument (e.g., `/anduin-plugin:setup staging`), map it directly. Otherwise, ask the user to choose:
+If the user provided an environment as an argument (e.g., `/anduin:setup staging`), map it directly. Otherwise, ask the user to choose:
 
 | Choice | Environment | URL |
 |---|---|---|
