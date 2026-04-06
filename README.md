@@ -29,10 +29,8 @@ For deal teams and anyone managing shared documents:
 ### Step 1: Install the plugin
 
 **Cowork (desktop app):**
-1. Open the Plugins panel (left sidebar)
-2. Click **+** next to **Marketplaces**
-3. Enter `anduintransaction/anduin-plugin` and click **Sync**
-4. Find **anduin** in the plugin list and enable it
+
+Follow [Anthropic's guide to using plugins in Cowork](https://support.claude.com/en/articles/13837440-use-plugins-in-cowork). When adding a marketplace, use `anduintransaction/anduin-plugin`.
 
 **Claude Code (terminal):**
 ```
