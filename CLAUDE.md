@@ -14,7 +14,7 @@ The plugin connects to Anduin's MCP server (hardcoded to Production US by defaul
 
 ```bash
 # Install from local path for testing (run from repo root)
-/plugin add .
+/plugin add ./plugins/anduin
 
 # Install from marketplace (for users)
 /plugin marketplace add anduintransaction/anduin-plugin
@@ -27,7 +27,7 @@ Since this is a content-only plugin with no test suite, verify manually:
 
 ```bash
 # Reinstall after changes
-/plugin add .
+/plugin add ./plugins/anduin
 
 # Verify skills load
 /anduin:gp-assistant    # Should load GP domain knowledge
