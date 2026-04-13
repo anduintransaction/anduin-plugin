@@ -48,8 +48,8 @@ plugins/anduin/                       — Anduin platform plugin
   .claude-plugin/plugin.json          — Plugin manifest (name, version, description)
   .mcp.json                           — MCP server config (hardcoded to Production US)
   agents/                             — Autonomous agent definitions (spawned as subagents)
-    gp-assistant.md                   — Fund subscription agent (model: sonnet, tools: mcp__anduin__*)
-    dataroom-agent.md                 — Data room agent (model: sonnet, tools: mcp__anduin__*)
+    gp-assistant.md                   — Fund subscription agent (model: sonnet, tools: mcp__plugin_anduin_anduin__*)
+    dataroom-agent.md                 — Data room agent (model: sonnet, tools: mcp__plugin_anduin_anduin__*)
   skills/                             — Domain knowledge loaded into context on demand
     gp-assistant/SKILL.md             — GP domain terminology, tool catalog, workflows
     dataroom/SKILL.md                 — Data room domain terminology, tool catalog, workflows

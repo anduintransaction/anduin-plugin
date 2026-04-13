@@ -50,6 +50,12 @@ All tools require OAuth2 scope `dataroom:read` or `dataroom:write`. Tools are pr
 - `dr_delete_items` — delete files and/or folders (moves to trash) (dataroom:write)
 - `dr_restore_items` — restore previously deleted items (dataroom:write)
 
+### Document Processing (dataroom:read)
+- `dr_convert_document_to_markdown` — convert an uploaded document (PDF, JPEG, PNG, GIF, WebP) to markdown using OCR. For large documents (50+ pages), returns a page index instead of full content
+- `dr_read_document_pages` — read specific page ranges from a previously-converted large document. Pages are 1-indexed, max 30 pages per call
+- `dr_convert_spreadsheet_to_markdown` — convert an uploaded spreadsheet (XLSX, XLS, CSV) to markdown. Returns sheet names and content
+- `dr_read_spreadsheet_sheet` — read a specific sheet from a previously-converted spreadsheet by index
+
 ### Analytics & Insights (dataroom:read)
 - `dr_get_insights` — query user/file/group engagement metrics (dimension param)
 - `dr_get_timeline` — view activity trends over time
@@ -67,6 +73,9 @@ IDs flow between tools in a strict order. ALWAYS copy IDs exactly as returned �
 3. dr_list_files → file/folder_id → dr_rename_item, dr_delete_items, dr_restore_items
 4. dr_list_participants → user_id → dr_remove_users, dr_modify_user_permissions
 5. dr_list_groups → group info → dr_get_insights(dimension="group")
+6. dr_list_files → file_id → dr_convert_document_to_markdown OR dr_convert_spreadsheet_to_markdown
+7. (large doc) dr_convert_document_to_markdown → page index → dr_read_document_pages(start_page, end_page)
+8. (multi-sheet) dr_convert_spreadsheet_to_markdown → sheet_index → dr_read_spreadsheet_sheet
 ```
 
 ## Workflows
@@ -100,6 +109,14 @@ IDs flow between tools in a strict order. ALWAYS copy IDs exactly as returned �
 6. For activity: `dr_get_activity_log` for recent events
 7. For trends: `dr_get_timeline` for time-based patterns
 8. Present data as markdown tables for clarity
+
+### Document Reading Workflow
+1. Navigate to the file: `dr_list_files` to find the file_id
+2. For PDFs/images: `dr_convert_document_to_markdown` with the file_id
+3. If large document (50+ pages): review the page index, then `dr_read_document_pages` for specific ranges
+4. For spreadsheets: `dr_convert_spreadsheet_to_markdown` with the file_id
+5. If multi-sheet: `dr_read_spreadsheet_sheet` with sheet_index for specific sheets
+6. Present the extracted content to the user
 
 ## Best Practices
 - Use `dr_list_entities` first to understand the user's organization context

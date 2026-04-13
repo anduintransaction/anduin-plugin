@@ -14,6 +14,7 @@ For fund managers and operations teams:
 - **Invite fund managers** — add team members to fund manager groups
 - **Check AML/KYC** — review compliance status for investors
 - **Assist with forms** — help fill or correct subscription form fields
+- **Read documents** — convert subscription documents and spreadsheets to readable text using OCR
 
 ### Data Room Agent — Virtual Data Room Management
 
@@ -23,6 +24,7 @@ For deal teams and anyone managing shared documents:
 - **Manage participants** — invite, remove, or change roles (Admin, Member, Contributor, Observer)
 - **Search and browse files** — find documents and navigate folder structures
 - **View analytics** — see who's accessing what, activity trends, and engagement metrics
+- **Read documents** — convert PDFs, images, and spreadsheets to readable text using OCR
 
 ## Getting Started
 
@@ -66,6 +68,7 @@ Just describe what you need in plain language. The right assistant activates aut
 - *"Tag these orders as reviewed"*
 - *"Invite john@acme.com as a fund manager"*
 - *"Check AML status for the LP orders in Close 2"*
+- *"Read the subscription agreement for Acme Capital"*
 
 **Data rooms:**
 - *"List all my data rooms"*
@@ -74,6 +77,7 @@ Just describe what you need in plain language. The right assistant activates aut
 - *"Organize the files into folders by document type"*
 - *"Show me the activity analytics for this data room"*
 - *"Who has access to our deal room?"*
+- *"Show me the contents of the NDA document"*
 
 ## Troubleshooting
 

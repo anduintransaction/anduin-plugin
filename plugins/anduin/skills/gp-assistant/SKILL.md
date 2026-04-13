@@ -78,6 +78,12 @@ All tools require OAuth2 scope `fundsub:read` or `fundsub:write`.
 - `validate_fund_manager_emails` — check email membership status (fundsub:read)
 - `invite_fund_managers` — send invitations to fund managers (fundsub:write)
 
+### Document Processing (fundsub:read)
+- `convert_document_to_markdown` — convert an uploaded document (PDF, JPEG, PNG, GIF, WebP) to markdown using OCR. For large documents (50+ pages), returns a page index instead of full content
+- `read_document_pages` — read specific page ranges from a previously-converted large document. Pages are 1-indexed, max 30 pages per call
+- `convert_spreadsheet_to_markdown` — convert an uploaded spreadsheet (XLSX, XLS, CSV) to markdown. Returns sheet names and content
+- `read_spreadsheet_sheet` — read a specific sheet from a previously-converted spreadsheet by index
+
 ## Tool Chaining Rules
 
 IDs flow between tools in a strict order. ALWAYS copy IDs exactly — never fabricate, shorten, or modify.
@@ -89,6 +95,9 @@ Step 2: query_dashboard → order_id + status/entity/contact/activity (preferred
 Step 3: get_order_workflow_data → detailed order info (tags, contacts, commitments)
 Step 4: get_order_subscription_docs → file_id → get_file_download_url
 Step 5: get_form_schema → field_alias → get_form_field_value, update_form_fields
+Step 6: get_order_subscription_docs → file_id → convert_document_to_markdown OR convert_spreadsheet_to_markdown
+Step 7: (large doc) convert_document_to_markdown → page index → read_document_pages(start_page, end_page)
+Step 8: (multi-sheet) convert_spreadsheet_to_markdown → sheet_index → read_spreadsheet_sheet
 ```
 
 ### Critical ID Rules
