@@ -26,6 +26,15 @@ For deal teams and anyone managing shared documents:
 - **View analytics** — see who's accessing what, activity trends, and engagement metrics
 - **Read documents** — convert PDFs, images, and spreadsheets to readable text using OCR
 
+### Managed Agents Deployer — Deploy Agents to Production
+
+For developers and platform teams:
+
+- **Deploy Anduin agents as Claude Managed Agents** — run agents server-side via Anthropic's hosted infrastructure
+- **Automate subscription reviews** — set up event-driven agents that review LP submissions automatically
+- **Schedule fund reports** — create cron-triggered agents for nightly health reports and compliance monitoring
+- **Generate deployment scripts** — get ready-to-run Python scripts customized for your use case
+
 ## Getting Started
 
 ### Step 1: Install the plugin
@@ -78,6 +87,12 @@ Just describe what you need in plain language. The right assistant activates aut
 - *"Show me the activity analytics for this data room"*
 - *"Who has access to our deal room?"*
 - *"Show me the contents of the NDA document"*
+
+**Managed agents:**
+- *"Deploy the GP assistant as a managed agent"*
+- *"Set up an automated agent that reviews LP submissions"*
+- *"Create a daily compliance check across all funds"*
+- *"Generate a managed agent script for our data room"*
 
 ## Troubleshooting
 
@@ -140,13 +155,19 @@ anduin-plugin/
 │   │   └── plugin.json          # Plugin manifest
 │   ├── .mcp.json                # MCP server config (Production US)
 │   ├── agents/
-│   │   ├── dataroom-agent.md    # Data Room autonomous agent
-│   │   └── gp-assistant.md      # GP Assistant autonomous agent
+│   │   ├── dataroom-agent.md              # Data Room autonomous agent
+│   │   ├── gp-assistant.md                # GP Assistant autonomous agent
+│   │   └── managed-agents-deployer.md     # Managed Agents deployment agent
 │   └── skills/
 │       ├── dataroom/
-│       │   └── SKILL.md         # Data Room domain knowledge
-│       └── gp-assistant/
-│           └── SKILL.md         # GP Assistant domain knowledge
+│       │   └── SKILL.md                   # Data Room domain knowledge
+│       ├── gp-assistant/
+│       │   └── SKILL.md                   # GP Assistant domain knowledge
+│       └── managed-agents/
+│           ├── SKILL.md                   # Managed Agents deployment guide
+│           └── references/
+│               ├── templates.md           # Python deployment templates
+│               └── api-reference.md       # Managed Agents API reference
 ├── LICENSE
 └── README.md
 ```
