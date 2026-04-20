@@ -22,6 +22,59 @@ description: Use when the user asks about fund subscriptions, LP review, fund ad
 - **order** (synonyms: LP, subscription, investor) — an LP's subscription order, identified by order_id
 - **form** (synonyms: subscription form, investor questionnaire) — the subscription form filled by an LP
 
+## Flow Gating
+
+FundSub MCP tools are gated to the **Flexible flow**. On Flexible-flow funds:
+- `get_fund_review_config.reviewers` is empty by service design (reviewers are not a legacy package concept in this flow). On Restricted-flow funds the same field is populated from the legacy review package — but Restricted funds are not in MCP scope today.
+- The `Form filled` status appears only on Restricted funds. Do not filter for it on Flexible funds.
+
+## LP Status Lifecycle
+
+Two review branches exist, and they lead to different terminal states:
+
+```
+LPNotStarted → LPInProgress
+  ├─ UNSIGNED-review branch: → LPPendingUnsignedReview → LPFormReviewed → LPRequestedSignature → LPSignedForm
+  └─ SIGNED-review branch:   → LPRequestedSignature → LPSignedForm → LPPendingReview → LPSubmitted
+                                                                                       ↓
+                                                                 (optional) LPPendingSubmission → LPSubmitted
+                                                                                       ↓
+                                                                                  LPCountersigned → LPCompleted
+```
+
+Key points:
+- SIGNED-review approval transitions directly to `LPSubmitted`. It does NOT pass through `LPFormReviewed` and does NOT countersign. Countersigning is a separate subsequent action on top of `LPSubmitted`.
+- UNSIGNED-review approval transitions to `LPFormReviewed` (pre-signature).
+- `LPPendingSubmission` is gated by the `enableLpManualSubmitSubscription` fund switch.
+- `LPPendingUnsignedReview` / `LPPendingReview` are gated by review-package flags.
+
+## Status Enum Names for `query_dashboard`
+
+`query_dashboard` filters accept **enum names**, not UI labels. Use:
+`LPNotStarted`, `LPInProgress`, `LPPendingUnsignedReview`, `LPFormReviewed`, `LPRequestedSignature`, `LPSignedForm`, `LPPendingSubmission`, `LPPendingReview`, `LPSubmitted`, `LPCountersigned`, `LPCompleted`.
+
+Never pass UI labels like `"Pending review"` or `"Pending approval"` — the tool will reject them.
+
+## Sort Fields
+
+`query_dashboard` sort key for most-recent activity is `lastActiveAt` (not `lastActivityAt`).
+
+## Subscription Agreement vs Form vs Supporting Docs
+
+- **Subscription form** (`get_form_markdown` / `get_form_schema`) — the live form the LP fills. This IS the subscription agreement's content for verification purposes.
+- **Supporting documents** (`get_supporting_docs`) — AML/KYC, tax forms (W-9, W-8BEN/W-8BEN-E), formation documents, uploaded by the LP.
+- **Subscription documents** (`get_order_subscription_docs`) — the generated/signed subscription booklet PDF. Downloadable via `get_file_download_url`, but its CONTENT is the form — verification questions should read the form, not OCR the PDF.
+
+When a user says "subscription agreement," route to the form unless they explicitly want the signed PDF artifact.
+
+## Activity-Log Identity Rules
+
+`get_order_activity_log` returns `actorName` and `actorRole` for events, so you CAN identify who performed an action (e.g., who approved an unsigned review). What you CANNOT identify from the activity log is the **ASSIGNED reviewer** for a multi-step review stage — assignment metadata is not in the log.
+
+## Search Scan-Limit
+
+`search_orders_by_field` truncates by **scanning the first 100 orders**, not by limiting the result list. When truncated, warn the user that matches beyond the first 100 scanned orders may have been missed.
+
 ## MCP Tools by Category
 
 All tools require OAuth2 scope `fundsub:read` or `fundsub:write`.

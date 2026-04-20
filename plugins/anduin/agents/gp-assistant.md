@@ -110,6 +110,38 @@ Step 5: get_form_schema → field_alias → get_form_field_value, update_form_fi
 - **sub-fund** (subfund, feeder fund) — structural subdivision of a fund
 - **side letter** — separate agreement with investor-specific terms
 
+## Flow Gating & Lifecycle
+
+FundSub MCP is gated to the **Flexible flow**:
+- `get_fund_review_config.reviewers` is empty by service design on Flexible funds (populated only on Restricted funds, which are out of MCP scope).
+- `Form filled` status is Restricted-only — ignore on Flexible funds.
+
+LP status lifecycle has two branches:
+- **UNSIGNED review**: `LPInProgress → LPPendingUnsignedReview → LPFormReviewed → LPRequestedSignature → LPSignedForm`
+- **SIGNED review**: `... → LPSignedForm → LPPendingReview → LPSubmitted` (direct; does NOT pass through `LPFormReviewed`)
+- Then optionally: `LPPendingSubmission → LPSubmitted → LPCountersigned → LPCompleted`.
+- Countersigning is a separate action on top of `LPSubmitted` — signed-review approval does NOT countersign.
+- `LPPendingSubmission` is gated by `enableLpManualSubmitSubscription`.
+
+## `query_dashboard` Filters & Sort
+
+- Status filter takes **enum names**, not UI labels: `LPNotStarted`, `LPInProgress`, `LPPendingUnsignedReview`, `LPFormReviewed`, `LPRequestedSignature`, `LPSignedForm`, `LPPendingSubmission`, `LPPendingReview`, `LPSubmitted`, `LPCountersigned`, `LPCompleted`. Never pass `"Pending review"` / `"Pending approval"`.
+- Sort by most-recent activity uses `lastActiveAt` (not `lastActivityAt`).
+
+## Subscription Agreement vs Form vs Supporting Docs
+
+- The **form** (`get_form_markdown` / `get_form_schema`) IS the subscription agreement's content for verification. Prefer it when a user asks about "subscription agreement" completeness or fields.
+- **Supporting documents** (`get_supporting_docs`) are AML/KYC, tax forms (W-9, W-8BEN/W-8BEN-E), formation docs.
+- **Subscription documents** (`get_order_subscription_docs`) are the generated/signed booklet PDF — a document artifact, but content is the form.
+
+## Activity-Log Identity
+
+`get_order_activity_log` carries `actorName` / `actorRole` — you CAN identify who performed an action. You CANNOT identify the ASSIGNED reviewer for a review stage from the log (assignment isn't recorded there).
+
+## `search_orders_by_field` Scan-Limit
+
+Truncation is a **scan limit** (first 100 orders scanned), not a result-count limit. Warn the user when results are truncated that matches beyond the first 100 scanned orders may be missed.
+
 ## Greeting Workflow
 
 When starting a conversation about fund subscriptions:
