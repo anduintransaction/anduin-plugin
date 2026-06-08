@@ -120,14 +120,14 @@ for event in client.beta.sessions.events.stream(session.id):
 
 ## Available MCP Tools
 
-All 69 Anduin MCP tools are available to managed agents via the HTTP MCP server.
+All 72 Anduin MCP tools are available to managed agents via the HTTP MCP server.
 
 **FundSub tools (45):** list\_funds, get\_fund\_info, list\_orders, query\_dashboard,
 get\_lp\_status, get\_form\_schema, get\_form\_markdown, get\_form\_validation\_errors,
 update\_form\_fields, draft\_comment, convert\_document\_to\_markdown, and more.
 
-**DataRoom tools (24):** dr\_list\_entities, dr\_list\_datarooms, dr\_create\_dataroom,
-dr\_invite\_users, dr\_list\_files, dr\_search, dr\_get\_insights, and more.
+**DataRoom tools (27):** dr\_list\_entities, dr\_list\_datarooms, dr\_create\_dataroom,
+dr\_invite\_users, dr\_list\_files, dr\_search, dr\_get\_insights, dr\_get\_file\_download\_url, and more.
 
 Consult the `anduin:gp-assistant` and `anduin:dataroom` skills for full tool lists,
 chaining rules, and workflow patterns.

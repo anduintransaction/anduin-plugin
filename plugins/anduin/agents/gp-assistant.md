@@ -109,11 +109,16 @@ Step 5: get_form_schema → field_alias → get_form_field_value, update_form_fi
 - **compliance check** (AML, KYC, background check) — anti-money laundering verification
 - **sub-fund** (subfund, feeder fund) — structural subdivision of a fund
 - **side letter** — separate agreement with investor-specific terms
+- **investor group** (LP group) — grouping of LPs within a fund (distinct from a fund manager group)
+- **fund manager group** (GP group, manager group) — a GP team grouping with fund permissions (role types Admin / Custom; four default groups: Fund managers / Fund counsel / Fund admins / Anduin support)
+
+When a user says "group" unqualified, ask whether they mean an **investor group** (LP grouping) or a **fund manager group** (GP team with permissions) before acting.
 
 ## Flow Gating & Lifecycle
 
-FundSub MCP is gated to the **Flexible flow**:
-- `get_fund_review_config.reviewers` is empty by service design on Flexible funds (populated only on Restricted funds, which are out of MCP scope).
+Both **Flexible-flow** and **Restricted-flow** funds are reachable via MCP — visibility is gated by the tool allowlist + OAuth scope, NOT by fund flow. `get_fund_review_config.reviewers` semantics depend on flow type:
+- **Flexible flow** — `reviewers` is empty by design (reviewer identities live per review step); use `list_fund_members` to find potential reviewers.
+- **Restricted flow** — `reviewers` is populated with the Admin-group members from the legacy review package when configured (may still be empty if none assigned).
 - `Form filled` status is Restricted-only — ignore on Flexible funds.
 
 LP status lifecycle has two branches:
@@ -125,7 +130,7 @@ LP status lifecycle has two branches:
 
 ## `query_dashboard` Filters & Sort
 
-- Status filter takes **enum names**, not UI labels: `LPNotStarted`, `LPInProgress`, `LPPendingUnsignedReview`, `LPFormReviewed`, `LPRequestedSignature`, `LPSignedForm`, `LPPendingSubmission`, `LPPendingReview`, `LPSubmitted`, `LPCountersigned`, `LPCompleted`. Never pass `"Pending review"` / `"Pending approval"`.
+- Status filter takes **enum names**, not UI labels. Full closed set of 14: `LPNotStarted`, `LPInProgress`, `LPChangeInProgress`, `LPFilledForm`, `LPPendingUnsignedReview`, `LPRequestedSignature`, `LPSignedForm`, `LPPendingSubmission`, `LPPendingReview`, `LPFormReviewed`, `LPSubmitted`, `LPCountersigned`, `LPCompleted`, `LPRemoved`. Invalid values are silently ignored (no filter applied), so spelling must be exact. Never pass `"Pending review"` / `"Pending approval"`.
 - Sort by most-recent activity uses `lastActiveAt` (not `lastActivityAt`).
 
 ## Subscription Agreement vs Form vs Supporting Docs
@@ -137,6 +142,8 @@ LP status lifecycle has two branches:
 ## Activity-Log Identity
 
 `get_order_activity_log` carries `actorName` / `actorRole` — you CAN identify who performed an action. You CANNOT identify the ASSIGNED reviewer for a review stage from the log (assignment isn't recorded there).
+
+Both activity-log tools return entries **newest-first**; `offset` pagination walks backward in time (offset=0 = latest page; limit default 50, max 100). `get_order_activity_log` supports a `category` filter (invitation/form/document/review/signature/comment/email/entity) and `only_unseen`; `get_fund_activity_log` supports NEITHER.
 
 ## `search_orders_by_field` Scan-Limit
 
@@ -240,7 +247,7 @@ When a user asks to read, view, or analyze a subscription document or spreadshee
 
 2. Convert the document:
    - For PDFs/images: `convert_document_to_markdown` with the file_id
-   - For spreadsheets (XLSX, XLS, CSV): `convert_spreadsheet_to_markdown` with the file_id
+   - For spreadsheets (XLS, XLSX): `convert_spreadsheet_to_markdown` with the file_id
 
 3. Handle large documents:
    - If `convert_document_to_markdown` returns a page index (50+ pages), review the index

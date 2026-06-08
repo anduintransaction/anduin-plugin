@@ -69,11 +69,12 @@ You access data room operations through the Anduin MCP server. All tool names ar
 ### Tool Chaining — IDs Flow Between Tools
 
 ```
-dr_list_entities → entity_id → dr_create_dataroom
-dr_list_datarooms → dataroom_id → all other tools
-dr_list_files → file/folder_id → dr_rename_item, dr_delete_items, dr_restore_items
+dr_list_entities → entity_id → dr_create_dataroom (entity_id optional — auto-resolves for single-entity users; entity-scoped, no dataroom_id)
+dr_list_datarooms → dataroom_id → dataroom-scoped tools (detail, participants, files, search, insights, timeline, activity log, summary, groups, create/rename/archive, invite/remove/modify, folder/item ops)
+dr_list_files → file_id/folder_id → dr_rename_item, dr_delete_items; dr_restore_items takes file_id ONLY (folders cannot be restored)
+dr_list_files/dr_search → file_id → dr_get_file_download_url, dr_convert_document_to_markdown, dr_convert_spreadsheet_to_markdown (file-scoped, NOT dataroom-scoped)
 dr_list_participants → user_id → dr_remove_users, dr_modify_user_permissions
-dr_list_groups → group info → dr_get_insights(dimension="group")
+dr_list_groups → group_id → dr_get_insights(dimension="group")
 ```
 
 ### Critical ID Rules
@@ -81,6 +82,18 @@ dr_list_groups → group info → dr_get_insights(dimension="group")
 2. ALWAYS obtain IDs from tool outputs
 3. Copy IDs exactly as they appear — never truncate or combine parts
 4. If you get an "Invalid ID" error, call the appropriate discovery tool (dr_list_datarooms, dr_list_files, etc.)
+
+### Key Tools
+
+- `dr_get_dataroom_detail` — name, archive status, participant/file/folder counts, creation date, settings (call after obtaining `dataroom_id` to greet with name + counts)
+- `dr_check_my_permissions` — your current role and the actions you can/cannot perform; call it before write operations the user may lack permission for
+- `dr_get_file_download_url` — temporary presigned download URL for a file (expires after 15 minutes); takes `file_id` (from dr_list_files/dr_search), NOT dataroom_id
+- `dr_create_folder` — `dr_create_folder(dataroom_id, name, parent_folder_id?)` to create a folder (top-level when `parent_folder_id` is omitted)
+- **Analytics gate** — `dr_get_insights`, `dr_get_timeline`, `dr_get_activity_log`, and `dr_get_dataroom_summary` require the caller to be a **joined Admin** on a **premium Insights-plan** data room; non-admins and non-premium plans are rejected regardless of what `dr_check_my_permissions` lists
+- `dr_get_insights` — `dataroom_id` (req), `dimension` (req: user|file|group), `id` (optional filter), `top_n` (optional, default 10), `sort_by` (optional: view_download [default] | time_spent | access)
+- `dr_get_timeline` — `dataroom_id` (req), `dimension` (req: user|file|group), `id` (REQUIRED — no aggregate/whole-room mode; discover via dr_list_participants/dr_list_files/dr_list_groups), `version_index` (required for `dimension="file"`, from dr_get_insights), `limit` (optional, default 30 day buckets)
+- `dr_get_activity_log` — `dataroom_id` (req), `time_range_days` (optional, default 7), `activity_type` (optional free-form filter, e.g. create/rename/archive/invite/join/permission_change/remove_users/request_access — not an enforced enum), `limit` (optional, default 50)
+- `dr_read_spreadsheet_sheet` — `file_id` (req), `sheet_index` (optional, default 1), `start_row`/`end_row` (optional, 1-based positional, default 1/last); over-budget output returns fewer rows with a continuation hint
 
 ## Terminology
 
@@ -93,9 +106,11 @@ dr_list_groups → group info → dr_get_insights(dimension="group")
 | Role | Permissions |
 |------|------------|
 | Admin | Full access — view, create, upload, delete, manage participants, archive |
-| Member | View, search, create folders, upload/rename/delete files, invite |
-| Contributor | View, search, create folders, upload/rename/delete files |
-| Observer | Read-only — view and search only |
+| Member | View, search, create folders, upload/rename/delete files, invite, view insights |
+| Contributor (internally Guest) | View, search, create folders, upload/rename/delete files, view insights |
+| Observer (internally Restricted) | Read-only — view and search only |
+
+Call `dr_check_my_permissions` for the authoritative, per-user set of allowed actions. The "view insights" shown for Member/Contributor mirrors that tool's output, but the analytics tools themselves require an **Admin on a premium Insights plan** (see Key Tools).
 
 ## Greeting Workflow
 
@@ -103,7 +118,8 @@ When a user starts a conversation about data rooms:
 1. Call `dr_list_entities` to understand their organizations
 2. Call `dr_list_datarooms` to discover accessible data rooms
 3. Greet with summary: "You have X data rooms across Y entities"
-4. Offer 2-3 specific suggestions based on their data
+4. When the conversation is scoped to a single data room, call `dr_get_dataroom_detail` with the `dataroom_id` to greet with its name + participant/file counts
+5. Offer 2-3 specific suggestions based on their data
 
 ## Participant Management Workflow
 
@@ -120,11 +136,13 @@ Always confirm destructive actions (remove, role change) before executing.
 
 1. Call `dr_list_files` to see current structure
 2. Suggest folder structure based on common patterns (by date, by type, by project)
-3. Create folders one at a time, confirming each
-4. For deletion: always confirm — items go to trash (recoverable)
+3. Create folders one at a time with `dr_create_folder(dataroom_id, name, parent_folder_id?)`, confirming each
+4. For deletion: always confirm — deleted files go to trash and are recoverable via `dr_restore_items`, but deleted folders cannot currently be restored
 5. Use `dr_search` to quickly find specific files
 
 ## Analytics Workflow
+
+> All analytics tools here require the caller to be an **Admin** on a **premium Insights-plan** data room; otherwise they return an access error. Surface that to the user rather than retrying.
 
 1. Start with `dr_get_dataroom_summary` for the health check overview
 2. Ask what to explore: participants, files, or activity
@@ -142,11 +160,11 @@ When a user asks to read, view, or analyze a file in a data room:
 
 1. Find the file: `dr_list_files` to navigate to the file, or `dr_search` to find it by name
 2. Convert the document:
-   - For PDFs/images: `dr_convert_document_to_markdown` with the file_id
-   - For spreadsheets (XLSX, XLS, CSV): `dr_convert_spreadsheet_to_markdown` with the file_id
+   - For PDFs/images: `dr_convert_document_to_markdown` with the file_id (conversions are cached; `force_regenerate` defaults to false)
+   - For Excel spreadsheets (XLS, XLSX): `dr_convert_spreadsheet_to_markdown` with the file_id
 3. Handle large documents:
-   - If page index returned (50+ pages): review it, then `dr_read_document_pages` for specific ranges
-   - Max 30 pages per call
+   - If a page index is returned (size/character-based trigger, ~50,000 chars ≈ 50+ pages): review it, then `dr_read_document_pages` for specific ranges
+   - `start_page` (default 1), `end_page` (default start_page+29, max 30 pages per call); over-budget output returns continuation hints
 4. Handle multi-sheet spreadsheets:
    - Use `dr_read_spreadsheet_sheet(file_id, sheet_index)` for specific sheets
 5. Present extracted content with document name and location context

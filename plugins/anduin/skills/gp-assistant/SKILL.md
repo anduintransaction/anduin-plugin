@@ -13,7 +13,8 @@ description: Use when the user asks about fund subscriptions, LP review, fund ad
 - **capital call** (synonyms: drawdown, funding notice) — fund manager request to transfer committed capital
 - **investment entity** (synonyms: legal entity, subscribing entity) — legal entity through which an LP invests
 - **sub-fund** (synonyms: subfund, feeder fund, parallel fund) — structural subdivision of a fund
-- **investor group** (synonyms: LP group) — grouping of LPs within a fund
+- **investor group** (synonyms: LP group) — grouping of LPs within a fund (distinct from a fund manager group)
+- **fund manager group** (synonyms: GP group, manager group) — a GP team grouping with fund permissions; role types are Admin / Custom, with four default groups (Fund managers / Fund counsel / Fund admins / Anduin support)
 - **subscription document** (synonyms: sub doc, subscription agreement) — formal legal agreement to subscribe
 - **side letter** — separate agreement granting investor-specific terms
 - **supporting document** (synonyms: tax form, KYC document, W-9, W-8BEN) — documents LP uploads for compliance
@@ -22,10 +23,13 @@ description: Use when the user asks about fund subscriptions, LP review, fund ad
 - **order** (synonyms: LP, subscription, investor) — an LP's subscription order, identified by order_id
 - **form** (synonyms: subscription form, investor questionnaire) — the subscription form filled by an LP
 
+When a user says "group" unqualified, both meanings are plausible — ask whether they mean an **investor group** (LP grouping) or a **fund manager group** (GP team with permissions) before acting.
+
 ## Flow Gating
 
-FundSub MCP tools are gated to the **Flexible flow**. On Flexible-flow funds:
-- `get_fund_review_config.reviewers` is empty by service design (reviewers are not a legacy package concept in this flow). On Restricted-flow funds the same field is populated from the legacy review package — but Restricted funds are not in MCP scope today.
+Both **Flexible-flow** and **Restricted-flow** funds are reachable via MCP — visibility is gated by the tool allowlist + OAuth scope, NOT by fund flow. `get_fund_review_config.reviewers` semantics depend on flow type:
+- **Flexible flow** — `reviewers` is empty by design (reviewer identities live per review step). Use `list_fund_members` to find potential reviewers.
+- **Restricted flow** — `reviewers` is populated with the Admin-group members from the legacy review package when configured (may still be empty if none assigned).
 - The `Form filled` status appears only on Restricted funds. Do not filter for it on Flexible funds.
 
 ## LP Status Lifecycle
@@ -50,10 +54,10 @@ Key points:
 
 ## Status Enum Names for `query_dashboard`
 
-`query_dashboard` filters accept **enum names**, not UI labels. Use:
-`LPNotStarted`, `LPInProgress`, `LPPendingUnsignedReview`, `LPFormReviewed`, `LPRequestedSignature`, `LPSignedForm`, `LPPendingSubmission`, `LPPendingReview`, `LPSubmitted`, `LPCountersigned`, `LPCompleted`.
+`query_dashboard` filters accept **enum names**, not UI labels. The full closed set of 14 valid values is:
+`LPNotStarted`, `LPInProgress`, `LPChangeInProgress`, `LPFilledForm`, `LPPendingUnsignedReview`, `LPRequestedSignature`, `LPSignedForm`, `LPPendingSubmission`, `LPPendingReview`, `LPFormReviewed`, `LPSubmitted`, `LPCountersigned`, `LPCompleted`, `LPRemoved`.
 
-Never pass UI labels like `"Pending review"` or `"Pending approval"` — the tool will reject them.
+Invalid values are silently ignored (no filter applied), so spelling must be exact. Never pass UI labels like `"Pending review"` or `"Pending approval"`.
 
 ## Sort Fields
 
@@ -79,12 +83,14 @@ When a user says "subscription agreement," route to the form unless they explici
 
 All tools require OAuth2 scope `fundsub:read` or `fundsub:write`.
 
+OAuth scope is necessary but not sufficient — some tools additionally require granular fund-manager permissions enforced at the service layer. `get_fund_feature_switches`, `get_fund_review_config`, `get_fund_report`, and `aggregate_orders` require the `AccessFundReporting` fund permission (ManageFundSetting alone does not grant the two config tools). `list_fund_members` and `list_fund_manager_groups` are role-gated: Admin-role users see the whole team / all groups; Custom-role users see only the groups they have permission on. Use `get_my_fund_permissions` to check the current user's permissions. On a permission denial, point the user to a fund admin rather than treating it as an error or bug.
+
 ### Fund & Order Discovery (fundsub:read)
 - `list_funds` — list accessible funds with IDs
 - `get_fund_info` — detailed fund information (closes, sub-funds, entity info)
-- `list_orders` — list LP orders in a fund
+- `list_orders` — list LP orders in a fund (limit default 50, max 100; offset default 0)
 - `get_order_workflow_data` — detailed order status (tags, contacts, commitments, metadata)
-- `get_order_submission_data` — order submission details
+- `get_order_submission_data` (order_id) — transformed form submission data grouped by namespace; a "No submission data available/found" result is returned both when the order is unsubmitted/unfilled (a caught internal error, not surfaced) and when a successful response has no fields — treat it as possibly not-yet-submitted rather than confirmed-absent, and cross-check via `get_lp_status`
 - `get_order_subscription_docs` — subscription documents by stage
 - `get_file_download_url` — pre-signed download URL for a file
 - `get_standard_form_fields` — standard form field definitions
@@ -92,12 +98,12 @@ All tools require OAuth2 scope `fundsub:read` or `fundsub:write`.
 
 ### LP Status & Review (fundsub:read)
 - `get_lp_status` — LP subscription status and details
-- `get_supporting_docs` — LP supporting/compliance documents
-- `get_required_docs` — required documents checklist
+- `get_supporting_docs` (order_id) — requested supporting/AML-KYC docs with status (Uploaded / Not Applicable / Marked as Provided / Pending) and a `[Requested by Admin]` flag, a tax-form submissions section, plus file IDs (the OCR-via-`convert_document_to_markdown` flow is covered in the Document Reading Workflow)
+- `get_required_docs` (fund_id) — lists the TAX FORMS configured for the fund (e.g. W-9, W-8BEN); despite the name returns ONLY tax-form types, NOT general supporting docs (use `get_supporting_docs` for per-LP requested supporting documents); returns "No tax forms configured" when empty
 - `get_form_markdown` — form content rendered as markdown
-- `get_form_comments` — comments on form fields
-- `draft_comment` — draft a comment on a form field (fundsub:write)
-- `get_aml_check` — AML check results
+- `get_form_comments` — all comments on the order's form; `include_internal` (default false) controls whether GP/admin-only internal comments are returned
+- `draft_comment` — create a public (default) or internal comment; field-level when `field_alias` is set, OR order-level/general when `field_alias` is omitted (do not pass a placeholder) (fundsub:write)
+- `get_aml_check` (order_id) — AML/KYC check results (status, provider, investor type, entity role); access is enforced at the service layer (ReBAC view check) — unlike sibling order tools it does not run the tool-layer conversation-scope confinement check
 - `get_aml_kyc_doc_groups` — AML/KYC document group configuration
 
 ### Form Interaction (fundsub:read / fundsub:write)
@@ -105,26 +111,31 @@ All tools require OAuth2 scope `fundsub:read` or `fundsub:write`.
 - `get_form_progress` — form completion progress (fundsub:read)
 - `get_form_field_aliases` — field alias mappings (fundsub:read)
 - `get_next_fields_to_fill` — prioritized fields: required, docs, recommended (fundsub:read)
-- `get_form_field_value` — specific field value (fundsub:read)
+- `get_form_field_value` (order_id, field_alias) — read a specific field value by alias (fundsub:read)
 - `get_form_validation_errors` — validation errors (fundsub:read)
 - `update_form_fields` — update field values (fundsub:write)
 
 ### Cross-Order Analysis (fundsub:read)
-- `compare_form_fields` — compare a field value across multiple orders
-- `search_orders_by_field` — search orders by field value
+- `compare_form_fields` — compare a field value across multiple orders (order_ids required, max 20 — graceful error over the limit)
+- `search_orders_by_field` — search orders by field value (limit default 20, max 100)
 
 ### Activity Log (fundsub:read)
-- `get_order_activity_log` — LP order activity history with filtering
-- `get_fund_activity_log` — fund-level admin activity log
+- `get_order_activity_log` (order_id; optional offset, limit [default 50, max 100], category, only_unseen) — LP order activity history, newest-first; offset walks backward in time; category filter (invitation/form/document/review/signature/comment/email/entity) and only_unseen supported
+- `get_fund_activity_log` (fund_id; optional offset, limit [default 50, max 100]) — fund-level admin activity log, newest-first; offset walks backward; NO category filter and NO only_unseen
 
 ### Dashboard & Reporting (fundsub:read / fundsub:write)
-- `query_dashboard` — dashboard with search, filter, sort, pagination (fundsub:read)
+- `query_dashboard` — dashboard with search, filter, sort, pagination (page_size default 50, max 100) (fundsub:read)
 - `get_fund_report` — fund subscription report (fundsub:read)
 - `get_my_fund_permissions` — current user's role and permissions (fundsub:read)
 - `list_fund_members` — fund team members and roles (fundsub:read)
-- `update_order_tags` — update tags on an order (fundsub:write)
-- `batch_update_order_tags` — batch tag update across multiple orders (fundsub:write)
-- `update_order_custom_data` — update custom columns on an order (fundsub:write)
+- `update_order_tags` — REPLACE all tags on an order with the provided list (empty array clears; read current tags via `get_order_workflow_data` first) (fundsub:write)
+- `batch_update_order_tags` — batch REPLACE tags across multiple orders (max 200 items) (fundsub:write)
+- `update_order_custom_data` — MERGE custom columns on an order (only specified columns change; max 20 columns; discover columns/allowed values via `get_fund_info`; metadata columns are read-only) (fundsub:write)
+
+### Fund Configuration & Aggregation (fundsub:read)
+- `aggregate_orders` — server-computed deduped order counts grouped by one or two of {status, orderType, close}, with optional `status_filter` and `order_type_filter` (Online/Offline); counts are fund-wide, deduped by investor; `group_by` defaults to `[status, orderType]`; `order_type_filter` uses the {Online, Offline} vocabulary (distinct from the status enum). Prefer `aggregate_orders` (or `get_fund_report`'s cross-tab) over hand-counting `query_dashboard` rows
+- `get_fund_feature_switches` (fund_id) — curated GP-visible feature-family config (review workflow, unsigned review, multi-step review, manual submission, side letter, AML/KYC, supporting-doc review, form lock); each family returns Enabled/Disabled + product meaning; internal rollout flags excluded. Call BEFORE answering "is X enabled for this fund?". Requires the `AccessFundReporting` permission (ManageFundSetting alone is insufficient)
+- `get_fund_review_config` (fund_id) — fund's signed and unsigned subscription review configuration (whether review enabled, whether unsigned review enabled, reviewer identities). Call BEFORE answering "is review enabled?" / "who reviews orders here?". v1 limitation: multi-step review stages and supporting-doc review config are NOT exposed; requires `AccessFundReporting`
 
 ### Fund Manager Invitation (fundsub:read / fundsub:write)
 - `list_fund_manager_groups` — list groups the user can invite into (fundsub:read)
@@ -132,9 +143,9 @@ All tools require OAuth2 scope `fundsub:read` or `fundsub:write`.
 - `invite_fund_managers` — send invitations to fund managers (fundsub:write)
 
 ### Document Processing (fundsub:read)
-- `convert_document_to_markdown` — convert an uploaded document (PDF, JPEG, PNG, GIF, WebP) to markdown using OCR. For large documents (50+ pages), returns a page index instead of full content
+- `convert_document_to_markdown` — convert an uploaded document (PDF, JPEG, PNG, GIF, WebP) to markdown using OCR. For large documents (50+ pages — the trigger is size/character-based), returns a page index instead of full content
 - `read_document_pages` — read specific page ranges from a previously-converted large document. Pages are 1-indexed, max 30 pages per call
-- `convert_spreadsheet_to_markdown` — convert an uploaded spreadsheet (XLSX, XLS, CSV) to markdown. Returns sheet names and content
+- `convert_spreadsheet_to_markdown` — convert an uploaded Excel spreadsheet (XLS, XLSX) to markdown tables (one section per sheet). Do NOT use `convert_document_to_markdown` for Excel files. For large spreadsheets returns a sheet index — use `read_spreadsheet_sheet`
 - `read_spreadsheet_sheet` — read a specific sheet from a previously-converted spreadsheet by index
 
 ## Tool Chaining Rules
