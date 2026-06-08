@@ -137,7 +137,7 @@ chaining rules, and workflow patterns.
 - Beta API: requires `managed-agents-2026-04-01` header (SDKs set this automatically)
 - Cloud-only (Anthropic infrastructure), US and EU regions
 - $0.08/session-hour + standard Claude token pricing
-- Multi-agent orchestration is in research preview
+- Multi-agent orchestration (multiagent sessions) is in public beta under the same `managed-agents-2026-04-01` header
 
 ## Additional Resources
 

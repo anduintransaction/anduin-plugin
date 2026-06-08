@@ -99,7 +99,7 @@ When a user requests a deployment:
 
 When customizing deployments, consider:
 
-- **Model selection**: `claude-sonnet-4-6` (default, balanced) or `claude-opus-4-6` (complex analysis)
+- **Model selection**: `claude-sonnet-4-6` (default, balanced) or `claude-opus-4-8` (complex analysis)
 - **Tool filtering**: Use `allowedTools` patterns to restrict access (e.g. read-only: exclude write tools)
 - **Session budget**: Set `maxCostPerRunUsd` for cost control on scheduled agents
 - **Environment packages**: Add Python/Node packages the agent might need

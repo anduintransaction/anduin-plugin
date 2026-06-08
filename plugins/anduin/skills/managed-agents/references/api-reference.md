@@ -81,21 +81,22 @@ Parameters:
 POST /v1/sessions/{session_id}/events
 ```
 
-Event types:
+Event types (client → session):
 - `user.message` — User turn with text/image content
-- `tool.result` — Tool execution result (for custom tools)
+- `user.custom_tool_result` — Response to an `agent.custom_tool_use` call (custom tools only; Anduin tools are MCP and are handled automatically by the vault proxy)
+- `user.tool_result` — Pre-built `agent_toolset` results, `self_hosted` environments only (the SDK/CLI provide these automatically)
 
 ### Stream Events (SSE)
 ```
 GET /v1/sessions/{session_id}/events
 ```
 
-Event types received:
+Event types received (SSE stream):
 - `agent.thinking` — Agent reasoning
-- `agent.tool_call` — Tool invocation
-- `agent.tool_result` — Tool result
-- `agent.message` — Final response text
-- `agent.completed` — Session complete
+- `agent.message` — Agent response text
+- `agent.tool_use` / `agent.tool_result` — Pre-built agent tool (bash, file ops) invocation and result
+- `agent.mcp_tool_use` / `agent.mcp_tool_result` — MCP server tool invocation and result (Anduin tool calls surface here)
+- `session.status_idle` — Agent finished the turn and is awaiting input; carries a `stop_reason`. There is no `agent.completed` event — treat `session.status_idle` as the turn-complete signal
 
 ### Delete Session
 ```
@@ -167,8 +168,8 @@ allowedTools=[
 | Session runtime | $0.08 per session-hour (idle time free) |
 | Claude Sonnet 4.6 input | $3 per million tokens |
 | Claude Sonnet 4.6 output | $15 per million tokens |
-| Claude Opus 4.6 input | $5 per million tokens |
-| Claude Opus 4.6 output | $25 per million tokens |
+| Claude Opus 4.8 input | $5 per million tokens |
+| Claude Opus 4.8 output | $25 per million tokens |
 | Web search (optional) | $10 per 1,000 searches |
 
 ## Error Handling
