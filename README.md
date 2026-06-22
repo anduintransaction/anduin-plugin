@@ -15,6 +15,7 @@ For fund managers and operations teams:
 - **Check AML/KYC** — review compliance status for investors
 - **Assist with forms** — help fill or correct subscription form fields
 - **Read documents** — convert subscription documents and spreadsheets to readable text using OCR
+- **Visualize data** — see charts, tables, and form-style summaries as interactive widgets (in apps that support them)
 
 ### Data Room Agent — Virtual Data Room Management
 
@@ -25,6 +26,7 @@ For deal teams and anyone managing shared documents:
 - **Search and browse files** — find documents and navigate folder structures
 - **View analytics** — see who's accessing what, activity trends, and engagement metrics
 - **Read documents** — convert PDFs, images, and spreadsheets to readable text using OCR
+- **Visualize data** — see engagement charts, file/participant tables, and summaries as interactive widgets (in apps that support them)
 
 ### Managed Agents Deployer — Deploy Agents to Production
 
@@ -63,8 +65,9 @@ You'll be asked to approve access scopes:
 | `fundsub:write` | Make changes to subscriptions (update forms, tags, invite managers) |
 | `dataroom:read` | View data rooms (files, participants, analytics) |
 | `dataroom:write` | Make changes to data rooms (create, invite, upload, delete) |
+| `mcp:render` | Show interactive charts, tables, and forms as visual widgets (display-only) |
 
-Approve whichever scopes match the work you need to do. You only see tools relevant to your approved scopes.
+Approve whichever scopes match the work you need to do. You only see tools relevant to your approved scopes. The visual widgets from `mcp:render` appear in apps that support them (Claude Code, Cowork); elsewhere you still get the same data as text.
 
 ## Usage
 
@@ -78,6 +81,8 @@ Just describe what you need in plain language. The right assistant activates aut
 - *"Invite john@acme.com as a fund manager"*
 - *"Check AML status for the LP orders in Close 2"*
 - *"Read the subscription agreement for Acme Capital"*
+- *"Chart the commitment totals by close"*
+- *"Show the orders as a table"*
 
 **Data rooms:**
 - *"List all my data rooms"*
@@ -87,6 +92,8 @@ Just describe what you need in plain language. The right assistant activates aut
 - *"Show me the activity analytics for this data room"*
 - *"Who has access to our deal room?"*
 - *"Show me the contents of the NDA document"*
+- *"Chart the most-viewed files in this data room"*
+- *"Show the participants as a table"*
 
 **Managed agents:**
 - *"Deploy the GP assistant as a managed agent"*
