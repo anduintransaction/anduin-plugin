@@ -231,7 +231,7 @@ Since MCP tools return structured data, present results as:
 
 ## Visualizing Data (UI Rendering)
 
-When a visual genuinely helps, render data as an interactive `ui://` widget with the display-only render tools. They require the **`mcp:render`** OAuth scope (independent of `fundsub:*`); if it is not granted the tools are absent — fall back to markdown. They render as sandboxed iframes in UI-capable hosts (Claude Code, Cowork) and are NOT shown in headless/text contexts, so ALWAYS also give a short markdown summary.
+When a visual genuinely helps, render data as an interactive `ui://` widget with the display-only render tools. **Availability is environment-dependent — rely on your live tool list, never assume:** these tools exist only on Anduin servers that have shipped UI rendering (rolled out per environment, local/staging ahead of production) and only when your grant includes the **`mcp:render`** scope (independent of `fundsub:*`). Before offering a rendered view, confirm the render tool is actually available; if it isn't, the environment hasn't enabled it yet — quietly fall back to markdown. They render as sandboxed iframes in UI-capable hosts (Claude Code, Cowork) and are NOT shown in headless/text contexts, so ALWAYS also give a short markdown summary.
 
 - `render_chart` — `title` + `echarts_option` (ECharts option object); optional `width`/`height`. For commitments-by-close, status breakdowns, etc.
 - `render_table` — `title` + `columns` (`[{id, label, type?}]`) + `rows`. For LP order lists, field comparisons.

@@ -172,7 +172,7 @@ When a user asks to read, view, or analyze a file in a data room:
 
 ## Visualizing Data (UI Rendering)
 
-When a visual genuinely helps, render data as an interactive `ui://` widget with the display-only render tools. They require the **`mcp:render`** OAuth scope (independent of `dataroom:*`); if it is not granted the tools are absent — fall back to markdown. They render as sandboxed iframes in UI-capable hosts (Claude Code, Cowork) and are NOT shown in headless/text contexts, so ALWAYS also give a short markdown summary. (These tools are NOT prefixed with `dr_`.)
+When a visual genuinely helps, render data as an interactive `ui://` widget with the display-only render tools. **Availability is environment-dependent — rely on your live tool list, never assume:** these tools exist only on Anduin servers that have shipped UI rendering (rolled out per environment, local/staging ahead of production) and only when your grant includes the **`mcp:render`** scope (independent of `dataroom:*`). Before offering a rendered view, confirm the render tool is actually available; if it isn't, the environment hasn't enabled it yet — quietly fall back to markdown. They render as sandboxed iframes in UI-capable hosts (Claude Code, Cowork) and are NOT shown in headless/text contexts, so ALWAYS also give a short markdown summary. (These tools are NOT prefixed with `dr_`.)
 
 - `render_chart` — `title` + `echarts_option` (ECharts option object); optional `width`/`height`. For file-engagement or activity-over-time charts.
 - `render_table` — `title` + `columns` (`[{id, label, type?}]`) + `rows`. For participant, file, or insights tables.

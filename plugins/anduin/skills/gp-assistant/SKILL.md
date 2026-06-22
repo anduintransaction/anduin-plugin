@@ -150,7 +150,9 @@ OAuth scope is necessary but not sufficient — some tools additionally require 
 
 ## UI Rendering (mcp:render scope)
 
-Three **display-only** render tools turn structured data into interactive `ui://` widgets (MCP Apps). They render as sandboxed iframes in UI-capable hosts (Claude Code, Cowork); in text-only / headless contexts they are not shown, so ALWAYS also summarize the data in markdown. They require the **`mcp:render`** OAuth scope — independent of `fundsub:*`. If it is not granted, these tools are absent — fall back to markdown tables/lists.
+Three **display-only** render tools turn structured data into interactive `ui://` widgets (MCP Apps). They render as sandboxed iframes in UI-capable hosts (Claude Code, Cowork); in text-only / headless contexts they are not shown, so ALWAYS also summarize the data in markdown.
+
+**Availability is environment-dependent — rely on your live tool list, never assume.** These tools exist only on Anduin servers that have shipped UI rendering (rolled out per environment — local/staging ahead of production) AND only when your grant includes the **`mcp:render`** OAuth scope (independent of `fundsub:*`). Your available tools are the source of truth: before offering a rendered view, confirm the specific render tool is actually present; if it is not, your server/environment simply hasn't enabled it yet — quietly fall back to a markdown table/list (don't announce a missing tool unless asked).
 
 These tools are a **presentation layer only**: values are shown for viewing and CANNOT be edited or sent back (`interactive: false`). Never use `render_ui` to *collect* input — use the form-filling tools (`update_form_fields`) for that.
 
