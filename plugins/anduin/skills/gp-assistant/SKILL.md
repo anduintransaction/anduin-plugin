@@ -148,6 +148,26 @@ OAuth scope is necessary but not sufficient — some tools additionally require 
 - `convert_spreadsheet_to_markdown` — convert an uploaded Excel spreadsheet (XLS, XLSX) to markdown tables (one section per sheet). Do NOT use `convert_document_to_markdown` for Excel files. For large spreadsheets returns a sheet index — use `read_spreadsheet_sheet`
 - `read_spreadsheet_sheet` — read a specific sheet from a previously-converted spreadsheet by index
 
+## UI Rendering (mcp:render scope)
+
+Three **display-only** render tools turn structured data into interactive `ui://` widgets (MCP Apps). They render as sandboxed iframes in UI-capable hosts (Claude Code, Cowork); in text-only / headless contexts they are not shown, so ALWAYS also summarize the data in markdown. They require the **`mcp:render`** OAuth scope — independent of `fundsub:*`. If it is not granted, these tools are absent — fall back to markdown tables/lists.
+
+These tools are a **presentation layer only**: values are shown for viewing and CANNOT be edited or sent back (`interactive: false`). Never use `render_ui` to *collect* input — use the form-filling tools (`update_form_fields`) for that.
+
+| Tool | Renders (`ui://`) | Key inputs |
+|------|------|-----------|
+| `render_chart` | ECharts chart (`ui://anduin/chart`) | `title` (req), `echarts_option` (req — ECharts option object: series/xAxis/yAxis/tooltip/legend), `width` (opt, 200–1200, default 600), `height` (opt, 150–800, default 400) |
+| `render_table` | Data table (`ui://anduin/table`) | `title` (req), `columns` (req — `[{id, label, type?: text\|number\|tag-list\|badge\|link}]`), `rows` (req — `[{<column id>: value, …, id}]`; tag-list cells are JSON string arrays) |
+| `render_ui` | Form-layout view (`ui://anduin/form`) | `component: "form"` (req), `title` (req), `description` (opt), `sections` (req — `[{title, fields:[{alias, label, type: text\|number\|select\|checkbox\|date\|textarea, value, required?, options?}]}]`) |
+
+Limits (over-limit/malformed input returns `{ "error": ... }` — fall back to markdown): chart `echarts_option` ≤100 KB; table ≤20 columns / ≤200 rows; form ≤20 sections / ≤50 fields.
+
+**When to render (vs. plain markdown):** render when a visual genuinely helps — a bar/pie chart of commitments by close, a sortable table of LP orders, a form-style snapshot of an order's key fields. Prefer plain markdown for a single fact or a short list, and when running headless. Build the data with the read tools FIRST, then pass it to a render tool, and STILL give a one-line text summary so non-UI clients stay functional.
+
+- "Chart commitments by close" → `aggregate_orders(group_by=[close])` → `render_chart` (bar/pie)
+- "Show the orders as a table" → `query_dashboard` → `render_table` (entity / status / commitment / tags columns)
+- "Summarize this order's key fields" → `get_order_submission_data` → `render_ui` (form sections, display-only)
+
 ## Tool Chaining Rules
 
 IDs flow between tools in a strict order. ALWAYS copy IDs exactly — never fabricate, shorten, or modify.

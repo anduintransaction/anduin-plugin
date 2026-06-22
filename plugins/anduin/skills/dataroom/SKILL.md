@@ -68,6 +68,26 @@ All tools require OAuth2 scope `dataroom:read` or `dataroom:write`. Tools are pr
 - `dr_get_activity_log` — see recent events and audit trail; `dataroom_id` (req), `time_range_days` (optional, default 7), `activity_type` (optional free-form filter — not an enforced enum; e.g. create/rename/archive/invite/join/permission_change/remove_users/request_access), `limit` (optional, default 50)
 - `dr_get_dataroom_summary` — get a health check snapshot
 
+## UI Rendering (mcp:render scope)
+
+Three **display-only** render tools turn structured data into interactive `ui://` widgets (MCP Apps). They render as sandboxed iframes in UI-capable hosts (Claude Code, Cowork); in text-only / headless contexts they are not shown, so ALWAYS also summarize the data in markdown. They require the **`mcp:render`** OAuth scope — independent of `dataroom:*`. If it is not granted, these tools are absent — fall back to markdown tables/lists. These tools are NOT prefixed with `dr_`.
+
+These tools are a **presentation layer only**: values are shown for viewing and CANNOT be edited or sent back (`interactive: false`).
+
+| Tool | Renders (`ui://`) | Key inputs |
+|------|------|-----------|
+| `render_chart` | ECharts chart (`ui://anduin/chart`) | `title` (req), `echarts_option` (req — ECharts option object: series/xAxis/yAxis/tooltip/legend), `width` (opt, 200–1200, default 600), `height` (opt, 150–800, default 400) |
+| `render_table` | Data table (`ui://anduin/table`) | `title` (req), `columns` (req — `[{id, label, type?: text\|number\|tag-list\|badge\|link}]`), `rows` (req — `[{<column id>: value, …, id}]`; tag-list cells are JSON string arrays) |
+| `render_ui` | Form-layout view (`ui://anduin/form`) | `component: "form"` (req), `title` (req), `description` (opt), `sections` (req — `[{title, fields:[{alias, label, type: text\|number\|select\|checkbox\|date\|textarea, value, required?, options?}]}]`) |
+
+Limits (over-limit/malformed input returns `{ "error": ... }` — fall back to markdown): chart `echarts_option` ≤100 KB; table ≤20 columns / ≤200 rows; form ≤20 sections / ≤50 fields.
+
+**When to render (vs. plain markdown):** render when a visual genuinely helps — a chart of file engagement or activity over time, a sortable table of participants or files, a form-style snapshot of a data room's details. Prefer plain markdown for a single fact or a short list, and when running headless. Build the data with the read tools FIRST, then pass it to a render tool, and STILL give a one-line text summary so non-UI clients stay functional.
+
+- "Chart the most-viewed files" → `dr_get_insights(dimension="file")` → `render_chart` (bar)
+- "Show participants as a table" → `dr_list_participants` → `render_table` (name / role / status columns)
+- "Summarize this data room" → `dr_get_dataroom_detail` → `render_ui` (form sections, display-only)
+
 ## Tool Chaining Rules
 
 IDs flow between tools in a strict order. ALWAYS copy IDs exactly as returned — never shorten, modify, or invent IDs.

@@ -61,6 +61,7 @@ You help users with:
 - **Searching and navigating** files within data rooms
 - **Analyzing** data room activity, user engagement, and file metrics
 - **Reading documents** — convert PDFs, images, and spreadsheets to readable text using OCR
+- **Visualizing** — render charts, tables, and form-style summaries as interactive widgets (display-only)
 
 ## MCP Tools
 
@@ -168,6 +169,16 @@ When a user asks to read, view, or analyze a file in a data room:
 4. Handle multi-sheet spreadsheets:
    - Use `dr_read_spreadsheet_sheet(file_id, sheet_index)` for specific sheets
 5. Present extracted content with document name and location context
+
+## Visualizing Data (UI Rendering)
+
+When a visual genuinely helps, render data as an interactive `ui://` widget with the display-only render tools. They require the **`mcp:render`** OAuth scope (independent of `dataroom:*`); if it is not granted the tools are absent — fall back to markdown. They render as sandboxed iframes in UI-capable hosts (Claude Code, Cowork) and are NOT shown in headless/text contexts, so ALWAYS also give a short markdown summary. (These tools are NOT prefixed with `dr_`.)
+
+- `render_chart` — `title` + `echarts_option` (ECharts option object); optional `width`/`height`. For file-engagement or activity-over-time charts.
+- `render_table` — `title` + `columns` (`[{id, label, type?}]`) + `rows`. For participant, file, or insights tables.
+- `render_ui` — `component: "form"` + `title` + `sections` (`[{title, fields:[{alias, label, type, value, …}]}]`). For a form-style data room summary.
+
+These are **display-only** (`interactive: false`) — they show values but CANNOT collect or send back input. Build the data with the read tools first (`dr_get_insights`, `dr_list_participants`, `dr_list_files`, `dr_get_dataroom_detail`), then render. Prefer plain markdown for a single fact or a short list.
 
 ## Best Practices
 

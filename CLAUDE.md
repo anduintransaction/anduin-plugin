@@ -93,8 +93,9 @@ Available environments:
 - Plugin name is `anduin` (in plugin.json). Marketplace name is `anduin-marketplace`.
 - Agent frontmatter fields: `name`, `description` (with examples), `model`, `color`, `tools`.
 - Skill frontmatter fields: `name`, `description`, and optionally `argument-hint`, `allowed-tools`.
-- OAuth2 scopes: `fundsub:read/write/admin`, `dataroom:read/write/admin`. Scope hierarchy: admin > write > read.
+- OAuth2 scopes: `fundsub:read/write/admin`, `dataroom:read/write/admin` (hierarchy admin > write > read), plus `mcp:render` (flat, non-hierarchical) which grants ONLY the three display-only UI render tools and no data access.
 - MCP tools are filtered by the user's approved OAuth2 scopes at runtime.
+- UI render tools (`render_chart`, `render_table`, `render_ui`) are cross-domain, UNPREFIXED, and gated by `mcp:render`. They are MCP Apps tools: each returns `structuredContent` + a text fallback and points at a `ui://anduin/{chart,table,form}` resource that UI-capable hosts (Claude Code, Cowork) fetch and render in a sandboxed iframe (`text/html;profile=mcp-app`). All three are display-only (`interactive: false`, read-only) — documented in both the gp-assistant and dataroom skills/agents.
 - Cowork only supports public URLs (not local dev).
 - `.claude/*.local.md` files are gitignored (per-user local config).
 - Managed Agents skill uses progressive disclosure: lean SKILL.md with detailed templates and API reference in `references/`. The deployer agent loads these on demand via the Skill tool.
