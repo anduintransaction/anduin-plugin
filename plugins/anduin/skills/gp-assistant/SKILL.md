@@ -162,7 +162,7 @@ These tools are a **presentation layer only**: values are shown for viewing and 
 | `render_table` | Data table (`ui://anduin/table`) | `title` (req), `columns` (req — `[{id, label, type?: text\|number\|tag-list\|badge\|link}]`), `rows` (req — `[{<column id>: value, …, id}]`; tag-list cells are JSON string arrays) |
 | `render_ui` | Form-layout view (`ui://anduin/form`) | `component: "form"` (req), `title` (req), `description` (opt), `sections` (req — `[{title, fields:[{alias, label, type: text\|number\|select\|checkbox\|date\|textarea, value, required?, options?}]}]`) |
 
-Limits (over-limit/malformed input returns `{ "error": ... }` — fall back to markdown): chart `echarts_option` ≤100 KB; table ≤20 columns / ≤200 rows; form ≤20 sections / ≤50 fields.
+Limits (over-limit/malformed input returns `{ "error": ... }` — fall back to markdown): chart `echarts_option` ≤100 KB; table ≤20 columns / ≤200 rows; form ≤20 sections / ≤50 fields. Each column `id` and each field `alias` must be unique, and every `type` must be one of the values listed above — duplicate ids/aliases or an unrecognized/non-string `type` are rejected.
 
 **When to render (vs. plain markdown):** render when a visual genuinely helps — a bar/pie chart of commitments by close, a sortable table of LP orders, a form-style snapshot of an order's key fields. Prefer plain markdown for a single fact or a short list, and when running headless. Build the data with the read tools FIRST, then pass it to a render tool, and STILL give a one-line text summary so non-UI clients stay functional.
 
