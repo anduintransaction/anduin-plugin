@@ -61,7 +61,7 @@ Invalid values are silently ignored (no filter applied), so spelling must be exa
 
 ## Sort Fields
 
-`query_dashboard` sort key for most-recent activity is `lastActiveAt` (not `lastActivityAt`).
+`query_dashboard` accepts three `sort_by` keys: `status`, `contactName` (orders by investor name — investment entity, else contact name), and `lastActiveAt` (most-recent activity). For activity, the key is `lastActiveAt`, NOT `lastActivityAt`.
 
 ## Subscription Agreement vs Form vs Supporting Docs
 
@@ -116,11 +116,11 @@ OAuth scope is necessary but not sufficient — some tools additionally require 
 - `update_form_fields` — update field values (fundsub:write)
 
 ### Cross-Order Analysis (fundsub:read)
-- `compare_form_fields` — compare a field value across multiple orders (order_ids required, max 20 — graceful error over the limit)
+- `compare_form_fields` — compare a field value across multiple orders (order_ids required, max 20 — graceful error over the limit). Returns PARTIAL results: orders that can't be read (bad/out-of-scope ID, no access) are skipped and listed under a "Could not compare N order(s)" section rather than failing the whole call — surface those skipped orders instead of assuming every requested order was compared
 - `search_orders_by_field` — search orders by field value (limit default 20, max 100)
 
 ### Activity Log (fundsub:read)
-- `get_order_activity_log` (order_id; optional offset, limit [default 50, max 100], category, only_unseen) — LP order activity history, newest-first; offset walks backward in time; category filter (invitation/form/document/review/signature/comment/email/entity) and only_unseen supported
+- `get_order_activity_log` (order_id; optional offset, limit [default 50, max 100], category, only_unseen) — LP order activity history, newest-first; offset walks backward in time; category filter (invitation/form/document/review/signature/comment/email/entity/other — an unknown category is rejected with an error, NOT silently ignored) and only_unseen supported
 - `get_fund_activity_log` (fund_id; optional offset, limit [default 50, max 100]) — fund-level admin activity log, newest-first; offset walks backward; NO category filter and NO only_unseen
 
 ### Dashboard & Reporting (fundsub:read / fundsub:write)
@@ -133,7 +133,7 @@ OAuth scope is necessary but not sufficient — some tools additionally require 
 - `update_order_custom_data` — MERGE custom columns on an order (only specified columns change; max 20 columns; discover columns/allowed values via `get_fund_info`; metadata columns are read-only) (fundsub:write)
 
 ### Fund Configuration & Aggregation (fundsub:read)
-- `aggregate_orders` — server-computed deduped order counts grouped by one or two of {status, orderType, close}, with optional `status_filter` and `order_type_filter` (Online/Offline); counts are fund-wide, deduped by investor; `group_by` defaults to `[status, orderType]`; `order_type_filter` uses the {Online, Offline} vocabulary (distinct from the status enum). Prefer `aggregate_orders` (or `get_fund_report`'s cross-tab) over hand-counting `query_dashboard` rows
+- `aggregate_orders` — server-computed deduped order counts grouped by one or two of {status, orderType, close} (an unsupported dimension, or more than two, is rejected with a clean error — not silently dropped), with optional `status_filter` and `order_type_filter` (Online/Offline); counts are fund-wide, deduped by investor; `group_by` defaults to `[status, orderType]`; `order_type_filter` uses the {Online, Offline} vocabulary (distinct from the status enum). Prefer `aggregate_orders` (or `get_fund_report`'s cross-tab) over hand-counting `query_dashboard` rows
 - `get_fund_feature_switches` (fund_id) — curated GP-visible feature-family config (review workflow, unsigned review, multi-step review, manual submission, side letter, AML/KYC, supporting-doc review, form lock); each family returns Enabled/Disabled + product meaning; internal rollout flags excluded. Call BEFORE answering "is X enabled for this fund?". Requires the `AccessFundReporting` permission (ManageFundSetting alone is insufficient)
 - `get_fund_review_config` (fund_id) — fund's signed and unsigned subscription review configuration (whether review enabled, whether unsigned review enabled, reviewer identities). Call BEFORE answering "is review enabled?" / "who reviews orders here?". v1 limitation: multi-step review stages and supporting-doc review config are NOT exposed; requires `AccessFundReporting`
 

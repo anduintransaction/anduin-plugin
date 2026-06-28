@@ -132,7 +132,7 @@ LP status lifecycle has two branches:
 ## `query_dashboard` Filters & Sort
 
 - Status filter takes **enum names**, not UI labels. Full closed set of 14: `LPNotStarted`, `LPInProgress`, `LPChangeInProgress`, `LPFilledForm`, `LPPendingUnsignedReview`, `LPRequestedSignature`, `LPSignedForm`, `LPPendingSubmission`, `LPPendingReview`, `LPFormReviewed`, `LPSubmitted`, `LPCountersigned`, `LPCompleted`, `LPRemoved`. Invalid values are silently ignored (no filter applied), so spelling must be exact. Never pass `"Pending review"` / `"Pending approval"`.
-- Sort by most-recent activity uses `lastActiveAt` (not `lastActivityAt`).
+- `sort_by` accepts `status`, `contactName` (investor name — investment entity, else contact name), and `lastActiveAt` (most-recent activity). For activity the key is `lastActiveAt`, NOT `lastActivityAt`.
 
 ## Subscription Agreement vs Form vs Supporting Docs
 
@@ -144,7 +144,7 @@ LP status lifecycle has two branches:
 
 `get_order_activity_log` carries `actorName` / `actorRole` — you CAN identify who performed an action. You CANNOT identify the ASSIGNED reviewer for a review stage from the log (assignment isn't recorded there).
 
-Both activity-log tools return entries **newest-first**; `offset` pagination walks backward in time (offset=0 = latest page; limit default 50, max 100). `get_order_activity_log` supports a `category` filter (invitation/form/document/review/signature/comment/email/entity) and `only_unseen`; `get_fund_activity_log` supports NEITHER.
+Both activity-log tools return entries **newest-first**; `offset` pagination walks backward in time (offset=0 = latest page; limit default 50, max 100). `get_order_activity_log` supports a `category` filter (invitation/form/document/review/signature/comment/email/entity/other — an unknown category is rejected with an error, NOT silently ignored) and `only_unseen`; `get_fund_activity_log` supports NEITHER.
 
 ## `search_orders_by_field` Scan-Limit
 
