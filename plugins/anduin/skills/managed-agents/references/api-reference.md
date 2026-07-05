@@ -3,6 +3,16 @@
 All endpoints require the `managed-agents-2026-04-01` beta header.
 The Python and TypeScript SDKs set this automatically.
 
+## Canonical References
+
+Verify against the official docs whenever anything here looks stale:
+
+- Overview: https://platform.claude.com/docs/en/managed-agents/overview
+- Quickstart: https://platform.claude.com/docs/en/managed-agents/quickstart
+- Vaults: https://platform.claude.com/docs/en/managed-agents/vaults
+- MCP connector: https://platform.claude.com/docs/en/managed-agents/mcp-connector
+- Reference: https://platform.claude.com/docs/en/managed-agents/reference
+
 ## Agents
 
 ### Create Agent
@@ -12,13 +22,15 @@ POST /v1/agents
 
 Parameters:
 - `name` (string, required) — Display name
-- `model` (string, required) — Model ID (e.g. `claude-sonnet-4-6`)
+- `model` (string, required) — Model ID (e.g. `claude-sonnet-5`)
 - `system` (string) — System prompt
-- `tools` (array) — Built-in tools (`agent_toolset_20260401`)
-- `mcp_servers` (object) — MCP server connections
+- `tools` (array) — Toolsets: the built-in `agent_toolset_20260401`, plus one `mcp_toolset` entry (with `mcp_server_name` matching a declared server) per MCP server
+- `mcp_servers` (array) — MCP server connections: `{"type": "url", "name": ..., "url": ...}`. No auth tokens here — credentials come from vaults at session time
 - `skills` (array) — Agent skills
-- `allowedTools` (array) — Tool whitelist patterns (e.g. `mcp__anduin__*`)
-- `disallowedTools` (array) — Tool blacklist patterns
+
+Tool access is controlled per toolset entry in `tools` (there is no `allowedTools`/`disallowedTools`):
+- `default_config.permission_policy` — `{"type": "always_allow"}` or `{"type": "always_ask"}`. MCP toolsets default to `always_ask`; the agent toolset defaults to `always_allow`
+- `default_config.enabled` plus a per-tool `configs` array (`{"name": ..., "enabled": ..., "permission_policy": ...}`) — enable/disable or override policy for individual tools. See "Tool Permissions & Filtering" below
 
 ### List Agents
 ```
@@ -56,8 +68,11 @@ POST /v1/environments
 
 Parameters:
 - `name` (string, required) — Display name
-- `packages` (array) — Pre-installed packages (e.g. `["python3", "nodejs"]`)
-- `network_policy` (object) — Allowed/denied domains
+- `config` (object) — Sandbox configuration, e.g. `{"type": "cloud", "packages": {...}, "networking": {...}}`
+  - `packages` (object) — Pre-installed packages keyed by package manager (e.g. `{"pip": ["pandas"], "npm": ["express"]}`)
+  - `networking` (object) — Outbound network access. Declared on the ENVIRONMENT (there is no agent-level `network_policy`):
+    - `{"type": "unrestricted"}` — full outbound access except a safety blocklist (default)
+    - `{"type": "limited", "allowed_hosts": [...], "allow_mcp_servers": bool, "allow_package_managers": bool}` — restrict the sandbox to the listed hosts; `allow_mcp_servers` additionally permits the agent's declared MCP endpoints. Recommended for production
 
 ### List Environments
 ```
@@ -74,7 +89,7 @@ POST /v1/sessions
 Parameters:
 - `agent` (string, required) — Agent ID
 - `environment_id` (string) — Environment ID
-- `vault_ids` (array) — Credential vault IDs
+- `vault_ids` (array) — Credential vault IDs. Credentials from these vaults are matched to the agent's `mcp_servers` entries by URL and injected automatically (see Vaults below)
 
 ### Send Events
 ```
@@ -83,7 +98,8 @@ POST /v1/sessions/{session_id}/events
 
 Event types (client → session):
 - `user.message` — User turn with text/image content
-- `user.custom_tool_result` — Response to an `agent.custom_tool_use` call (custom tools only; Anduin tools are MCP and are handled automatically by the vault proxy)
+- `user.tool_confirmation` — Approve or deny a tool call paused by an `always_ask` permission policy (`result: "allow" | "deny"`)
+- `user.custom_tool_result` — Response to an `agent.custom_tool_use` call (custom tools only; Anduin tools are MCP tools executed server-side — the vault credential matching the server URL is injected automatically, no client-side result needed)
 - `user.tool_result` — Pre-built `agent_toolset` results, `self_hosted` environments only (the SDK/CLI provide these automatically)
 
 ### Stream Events (SSE)
@@ -96,7 +112,7 @@ Event types received (SSE stream):
 - `agent.message` — Agent response text
 - `agent.tool_use` / `agent.tool_result` — Pre-built agent tool (bash, file ops) invocation and result
 - `agent.mcp_tool_use` / `agent.mcp_tool_result` — MCP server tool invocation and result (Anduin tool calls surface here)
-- `session.status_idle` — Agent finished the turn and is awaiting input; carries a `stop_reason`. There is no `agent.completed` event — treat `session.status_idle` as the turn-complete signal
+- `session.status_idle` — Agent finished the turn and is awaiting input; carries a `stop_reason`. There is no `agent.completed` event — treat `session.status_idle` as the turn-complete signal. A `stop_reason.type` of `requires_action` means the session is paused on `always_ask` tool calls and waits for `user.tool_confirmation` events
 
 ### Delete Session
 ```
@@ -111,33 +127,50 @@ POST /v1/vaults
 ```
 
 Parameters:
-- `name` (string, required) — Vault name
+- `display_name` (string, required) — Vault name
+- `metadata` (object) — Optional tags to map the vault back to your own user records
 
 ### Add Credentials
 ```
 POST /v1/vaults/{vault_id}/credentials
 ```
 
+MCP credentials are keyed by `mcp_server_url` and injected by URL match: when the agent
+connects to an MCP server whose declared `url` exactly matches a credential's
+`mcp_server_url`, that credential authenticates the connection automatically. There is
+no proxy layer, and no tokens ever appear in the agent definition.
+
 Parameters:
-- `provider` (string, required) — Provider name (e.g. `anduin`)
-- `access_token` (string) — OAuth access token
-- `refresh_token` (string) — OAuth refresh token
-- `expires_at` (string) — Token expiry ISO timestamp
+- `display_name` (string) — Credential name
+- `auth` (object, required) — One of:
+  - `{"type": "static_bearer", "mcp_server_url": ..., "token": ...}` — fixed bearer token (API key / PAT). Does NOT auto-refresh
+  - `{"type": "mcp_oauth", "mcp_server_url": ..., "access_token": ..., "expires_at": ..., "refresh": {...}}` — OAuth 2.0. With a `refresh` block (`token_endpoint`, `client_id`, `scope`, `refresh_token`, `token_endpoint_auth`), Anthropic refreshes the access token automatically when it expires — use this for long-running/scheduled agents
+
+Secret values (`token`, `access_token`, `refresh_token`, `client_secret`) are write-only
+and never returned by the API. See the vaults doc (Canonical References above) for the
+full credential shapes and rotation/validation endpoints.
 
 ## MCP Server Configuration
 
-### HTTP/SSE Transport (for Anduin MCP)
+### Declaring the Anduin MCP server on an agent
 ```python
-mcp_servers={
-    "anduin": {
-        "type": "http",
-        "url": "https://mcp.anduin.app/mcp",
-        "headers": {
-            "Authorization": "Bearer ${ANDUIN_TOKEN}"
-        }
-    }
-}
+agent = client.beta.agents.create(
+    name="anduin-agent",
+    model="claude-sonnet-5",
+    mcp_servers=[
+        {"type": "url", "name": "anduin", "url": "https://mcp.anduin.app/mcp"},
+    ],
+    tools=[
+        {"type": "agent_toolset_20260401"},
+        {"type": "mcp_toolset", "mcp_server_name": "anduin"},
+    ],
+)
 ```
+
+No `Authorization` header is configured on the agent. Authentication is supplied at
+session creation via `vault_ids`: the vault credential whose `mcp_server_url` matches
+the declared `url` is injected automatically (see Vaults above). Never hardcode tokens
+in agent definitions.
 
 ### Tool Naming Convention
 MCP tools follow the pattern: `mcp__<server-name>__<tool-name>`
@@ -147,30 +180,51 @@ Examples:
 - `mcp__anduin__query_dashboard`
 - `mcp__anduin__dr_list_datarooms`
 
-### Tool Filtering
-```python
-# Allow all tools from Anduin MCP server
-allowedTools=["mcp__anduin__*"]
+### Tool Permissions & Filtering
+There is no `allowedTools`/`disallowedTools`. Access is controlled on the agent's
+`mcp_toolset` entry via `permission_policy` and per-tool `configs`:
 
-# Allow only read tools
-allowedTools=[
-    "mcp__anduin__list_funds",
-    "mcp__anduin__get_fund_info",
-    "mcp__anduin__list_orders",
-    "mcp__anduin__query_dashboard",
-]
+```python
+# Auto-approve all Anduin tools. MCP toolsets default to always_ask, which
+# pauses the session for a user.tool_confirmation — unusable for unattended
+# scheduled/event-driven agents, so trusted servers are set to always_allow.
+{
+    "type": "mcp_toolset",
+    "mcp_server_name": "anduin",
+    "default_config": {"permission_policy": {"type": "always_allow"}},
+}
+
+# Least privilege: enable only specific read tools, everything else off
+{
+    "type": "mcp_toolset",
+    "mcp_server_name": "anduin",
+    "default_config": {"enabled": False},
+    "configs": [
+        {"name": "list_funds", "enabled": True},
+        {"name": "get_fund_info", "enabled": True},
+        {"name": "list_orders", "enabled": True},
+        {"name": "query_dashboard", "enabled": True},
+    ],
+}
 ```
+
+`configs` entries use the bare tool name as reported by the server (`list_funds`, not
+`mcp__anduin__list_funds`). Each entry can also carry its own `permission_policy` to
+override the toolset default for that one tool.
 
 ## Pricing
 
 | Component | Cost |
 |-----------|------|
-| Session runtime | $0.08 per session-hour (idle time free) |
-| Claude Sonnet 4.6 input | $3 per million tokens |
-| Claude Sonnet 4.6 output | $15 per million tokens |
+| Session runtime | $0.08 per session-hour (metered only while `running`; idle time free) |
+| Claude Sonnet 5 input | $2 per million tokens through Aug 31, 2026, then $3 |
+| Claude Sonnet 5 output | $10 per million tokens through Aug 31, 2026, then $15 |
 | Claude Opus 4.8 input | $5 per million tokens |
 | Claude Opus 4.8 output | $25 per million tokens |
 | Web search (optional) | $10 per 1,000 searches |
+
+Check current rates at https://platform.claude.com/docs/en/about-claude/pricing before
+estimating costs — model pricing changes over time.
 
 ## Error Handling
 

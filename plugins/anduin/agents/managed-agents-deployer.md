@@ -99,8 +99,8 @@ When a user requests a deployment:
 
 When customizing deployments, consider:
 
-- **Model selection**: `claude-sonnet-4-6` (default, balanced) or `claude-opus-4-8` (complex analysis)
-- **Tool filtering**: Use `allowedTools` patterns to restrict access (e.g. read-only: exclude write tools)
+- **Model selection**: `claude-sonnet-5` (default, balanced) or `claude-opus-4-8` (complex analysis)
+- **Tool access**: Configured on the agent's `mcp_toolset` entry — set `default_config.permission_policy` to `always_allow` for unattended runs (MCP toolsets default to `always_ask`, which pauses for approval), and restrict tools via `default_config.enabled: false` plus per-tool `configs` entries with `enabled: true` (e.g. read-only: enable only the read tools)
 - **Session budget**: Set `maxCostPerRunUsd` for cost control on scheduled agents
 - **Environment packages**: Add Python/Node packages the agent might need
 
@@ -108,10 +108,10 @@ When customizing deployments, consider:
 
 - Always test against **staging** before deploying to production
 - Use **environment variables** for OAuth tokens, never hardcode
-- Set **allowedTools** to minimum needed (principle of least privilege)
+- Enable only the MCP tools the agent needs (`default_config.enabled: false` + explicit `configs` entries) — principle of least privilege
 - For scheduled agents, include **error handling** and **retry logic**
 - Store agent IDs and environment IDs for reuse across sessions
-- Use **vaults** for OAuth credential management in production
+- Use **vaults** for credentials — prefer `mcp_oauth` with a `refresh` block so tokens auto-refresh; credentials are injected by MCP server URL match, so never put Authorization headers in agent definitions
 
 ## Data Presentation
 

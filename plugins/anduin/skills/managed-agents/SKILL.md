@@ -31,7 +31,7 @@ agents cannot handle (no cron, no webhooks, no external API access).
 - **Agent** — Reusable config: model, system prompt, MCP servers. Versioned via API.
 - **Environment** — Container template with packages and network access.
 - **Session** — Running agent instance. $0.08/session-hour (idle time free).
-- **Vault** — Secure credential storage. Manages OAuth token refresh automatically.
+- **Vault** — Secure credential storage. Credentials are injected by MCP server URL match at session time; `mcp_oauth` credentials refresh automatically.
 
 ## Setup Prerequisites
 
@@ -64,18 +64,41 @@ npm install @anthropic-ai/sdk
 
 ### Step 2: Create a Vault for OAuth Credentials
 
+Credentials are keyed by `mcp_server_url` and injected automatically when the agent
+connects to that URL — never hardcode tokens in the agent definition. Use `mcp_oauth`
+for production: with a `refresh` block, Anthropic refreshes the access token when it
+expires, so scheduled and long-running agents survive token expiry.
+
 ```python
 import anthropic
 client = anthropic.Anthropic()
 
-vault = client.beta.vaults.create(name="anduin-credentials")
+vault = client.beta.vaults.create(display_name="anduin-credentials")
 client.beta.vaults.credentials.create(
     vault_id=vault.id,
-    provider="anduin",
-    access_token="<OAUTH_ACCESS_TOKEN>",
-    refresh_token="<OAUTH_REFRESH_TOKEN>",
+    display_name="Anduin OAuth",
+    auth={
+        "type": "mcp_oauth",
+        "mcp_server_url": "https://mcp.anduin.app/mcp",
+        "access_token": "<OAUTH_ACCESS_TOKEN>",
+        "expires_at": "<ISO_8601_EXPIRY>",
+        "refresh": {
+            "token_endpoint": "<ANDUIN_TOKEN_ENDPOINT>",
+            "client_id": "<CLIENT_ID>",
+            "scope": "fundsub:read fundsub:write",
+            "refresh_token": "<OAUTH_REFRESH_TOKEN>",
+            "token_endpoint_auth": {
+                "type": "client_secret_basic",
+                "client_secret": "<CLIENT_SECRET>",
+            },
+        },
+    },
 )
 ```
+
+For a quick one-off test, a `static_bearer` credential (`auth={"type": "static_bearer",
+"mcp_server_url": ..., "token": ...}`) also works, but it does NOT auto-refresh — the
+agent starts failing once the token expires.
 
 ### Step 3: Create the Agent
 
@@ -93,7 +116,15 @@ Reuse system prompts from the anduin-plugin agent definitions. Reference templat
 ```python
 environment = client.beta.environments.create(
     name="anduin-agent-env",
-    packages=["python3"],
+    config={
+        "type": "cloud",
+        # Least privilege: the sandbox only needs to reach the Anduin MCP server.
+        "networking": {
+            "type": "limited",
+            "allowed_hosts": ["mcp.anduin.app"],
+            "allow_mcp_servers": True,
+        },
+    },
 )
 ```
 

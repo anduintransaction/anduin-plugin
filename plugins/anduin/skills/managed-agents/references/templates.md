@@ -1,7 +1,9 @@
 # Managed Agent Deployment Templates
 
 Ready-to-use Python scripts for deploying Anduin agents as Claude Managed Agents.
-Each template creates the agent, environment, vault, and runs a test session.
+Each template creates a credential vault, the agent, and an environment, and (except
+Template 5) runs a test session. Credentials always flow through a vault — injected by
+URL match at session time — never hardcoded into the agent definition.
 
 ## Template 1: GP Assistant (Interactive)
 
@@ -13,18 +15,61 @@ Anduin GP Assistant — Managed Agent Deployment
 Interactive fund subscription management via API.
 """
 import os
+from urllib.parse import urlparse
+
 import anthropic
 
 client = anthropic.Anthropic()
 
 # --- Configuration ---
 ANDUIN_MCP_URL = os.environ.get("ANDUIN_MCP_URL", "https://mcp.anduin.app/mcp")
-ANDUIN_TOKEN = os.environ["ANDUIN_OAUTH_TOKEN"]
 
-# --- Step 1: Create the Agent ---
+# --- Step 1: Create a Vault with the Anduin Credential ---
+# The credential is injected by URL match when the agent connects to the MCP
+# server. Never put tokens in the agent definition.
+vault = client.beta.vaults.create(display_name="anduin-gp-credentials")
+
+# Preferred: mcp_oauth — Anthropic refreshes the access token automatically,
+# so long-running sessions survive token expiry.
+client.beta.vaults.credentials.create(
+    vault_id=vault.id,
+    display_name="Anduin OAuth",
+    auth={
+        "type": "mcp_oauth",
+        "mcp_server_url": ANDUIN_MCP_URL,
+        "access_token": os.environ["ANDUIN_ACCESS_TOKEN"],
+        "expires_at": os.environ["ANDUIN_TOKEN_EXPIRES_AT"],  # ISO 8601
+        "refresh": {
+            "token_endpoint": os.environ["ANDUIN_TOKEN_ENDPOINT"],
+            "client_id": os.environ["ANDUIN_CLIENT_ID"],
+            "scope": "fundsub:read fundsub:write",
+            "refresh_token": os.environ["ANDUIN_REFRESH_TOKEN"],
+            # Match your OAuth client's token_endpoint_auth_method
+            # ("client_secret_basic", "client_secret_post", or "none").
+            "token_endpoint_auth": {
+                "type": "client_secret_basic",
+                "client_secret": os.environ["ANDUIN_CLIENT_SECRET"],
+            },
+        },
+    },
+)
+# Quick-start alternative: static_bearer — a fixed token with NO auto-refresh
+# (sessions start failing once the token expires; fine for a one-off test):
+# client.beta.vaults.credentials.create(
+#     vault_id=vault.id,
+#     display_name="Anduin token",
+#     auth={
+#         "type": "static_bearer",
+#         "mcp_server_url": ANDUIN_MCP_URL,
+#         "token": os.environ["ANDUIN_OAUTH_TOKEN"],
+#     },
+# )
+print(f"Vault created: {vault.id}")
+
+# --- Step 2: Create the Agent ---
 agent = client.beta.agents.create(
     name="anduin-gp-assistant",
-    model="claude-sonnet-4-6",
+    model="claude-sonnet-5",
     system="""You are an AI assistant specialized in reviewing LP (Limited Partner) \
 subscriptions for fund administration on the Anduin platform.
 
@@ -49,33 +94,46 @@ Critical ID Rules:
 1. IDs are opaque strings — NEVER construct, guess, or modify them
 2. ALWAYS obtain IDs from tool outputs
 3. Copy IDs exactly as returned""",
-    mcp_servers={
-        "anduin": {
-            "type": "http",
-            "url": ANDUIN_MCP_URL,
-            "headers": {
-                "Authorization": f"Bearer {ANDUIN_TOKEN}"
-            }
-        }
-    }
+    mcp_servers=[
+        {"type": "url", "name": "anduin", "url": ANDUIN_MCP_URL},
+    ],
+    tools=[
+        {"type": "agent_toolset_20260401"},
+        {
+            "type": "mcp_toolset",
+            "mcp_server_name": "anduin",
+            # MCP toolsets default to always_ask, which pauses unattended
+            # sessions for approval — auto-approve the trusted Anduin tools.
+            "default_config": {"permission_policy": {"type": "always_allow"}},
+        },
+    ],
 )
 print(f"Agent created: {agent.id}")
 
-# --- Step 2: Create Environment ---
+# --- Step 3: Create Environment ---
 environment = client.beta.environments.create(
     name="anduin-gp-env",
-    packages=["python3"],
+    config={
+        "type": "cloud",
+        # Least privilege: the sandbox only needs to reach the Anduin MCP server.
+        "networking": {
+            "type": "limited",
+            "allowed_hosts": [urlparse(ANDUIN_MCP_URL).hostname],
+            "allow_mcp_servers": True,
+        },
+    },
 )
 print(f"Environment created: {environment.id}")
 
-# --- Step 3: Start a Session ---
+# --- Step 4: Start a Session (vault_ids injects the Anduin credential) ---
 session = client.beta.sessions.create(
     agent=agent.id,
     environment_id=environment.id,
+    vault_ids=[vault.id],
 )
 print(f"Session started: {session.id}")
 
-# --- Step 4: Send a Test Message ---
+# --- Step 5: Send a Test Message ---
 client.beta.sessions.events.send(
     session.id,
     events=[{
@@ -84,7 +142,7 @@ client.beta.sessions.events.send(
     }]
 )
 
-# --- Step 5: Stream Results ---
+# --- Step 6: Stream Results ---
 for event in client.beta.sessions.events.stream(session.id):
     if hasattr(event, 'content'):
         print(event.content, end="", flush=True)
@@ -105,17 +163,44 @@ Automatically reviews LP submissions for completeness.
 Trigger via webhook when an LP submits a form.
 """
 import os
+from urllib.parse import urlparse
+
 import anthropic
 
 client = anthropic.Anthropic()
 
 ANDUIN_MCP_URL = os.environ.get("ANDUIN_MCP_URL", "https://mcp.anduin.app/mcp")
-ANDUIN_TOKEN = os.environ["ANDUIN_OAUTH_TOKEN"]
+
+# --- Create Vault (once) ---
+# mcp_oauth auto-refreshes the token, so webhook-triggered reviews keep
+# working long after the initial access token would have expired.
+# (See Template 1 for the static_bearer quick-start alternative — no refresh.)
+vault = client.beta.vaults.create(display_name="anduin-reviewer-credentials")
+client.beta.vaults.credentials.create(
+    vault_id=vault.id,
+    display_name="Anduin OAuth",
+    auth={
+        "type": "mcp_oauth",
+        "mcp_server_url": ANDUIN_MCP_URL,
+        "access_token": os.environ["ANDUIN_ACCESS_TOKEN"],
+        "expires_at": os.environ["ANDUIN_TOKEN_EXPIRES_AT"],  # ISO 8601
+        "refresh": {
+            "token_endpoint": os.environ["ANDUIN_TOKEN_ENDPOINT"],
+            "client_id": os.environ["ANDUIN_CLIENT_ID"],
+            "scope": "fundsub:read fundsub:write",
+            "refresh_token": os.environ["ANDUIN_REFRESH_TOKEN"],
+            "token_endpoint_auth": {
+                "type": "client_secret_basic",
+                "client_secret": os.environ["ANDUIN_CLIENT_SECRET"],
+            },
+        },
+    },
+)
 
 # --- Create Agent (once, reuse across reviews) ---
 agent = client.beta.agents.create(
     name="anduin-subscription-reviewer",
-    model="claude-sonnet-4-6",
+    model="claude-sonnet-5",
     system="""You are an automated subscription review agent for the Anduin platform. \
 When given an order ID, perform a comprehensive review:
 
@@ -142,19 +227,31 @@ Critical Rules:
 - ALWAYS call get_lp_status before any other order-specific tools.
 - Report findings objectively. Do not approve or reject orders.
 - Use draft_comment to post the review summary on the order.""",
-    mcp_servers={
-        "anduin": {
-            "type": "http",
-            "url": ANDUIN_MCP_URL,
-            "headers": {"Authorization": f"Bearer {ANDUIN_TOKEN}"}
-        }
-    }
+    mcp_servers=[
+        {"type": "url", "name": "anduin", "url": ANDUIN_MCP_URL},
+    ],
+    tools=[
+        {"type": "agent_toolset_20260401"},
+        {
+            "type": "mcp_toolset",
+            "mcp_server_name": "anduin",
+            # Auto-approve: webhook-driven runs have no human to confirm calls.
+            "default_config": {"permission_policy": {"type": "always_allow"}},
+        },
+    ],
 )
 print(f"Reviewer agent created: {agent.id}")
 
 environment = client.beta.environments.create(
     name="anduin-reviewer-env",
-    packages=["python3"],
+    config={
+        "type": "cloud",
+        "networking": {
+            "type": "limited",
+            "allowed_hosts": [urlparse(ANDUIN_MCP_URL).hostname],
+            "allow_mcp_servers": True,
+        },
+    },
 )
 
 
@@ -163,6 +260,7 @@ def review_order(order_id: str) -> str:
     session = client.beta.sessions.create(
         agent=agent.id,
         environment_id=environment.id,
+        vault_ids=[vault.id],
     )
 
     client.beta.sessions.events.send(
@@ -207,16 +305,43 @@ Anduin Fund Health Reporter — Managed Agent
 Runs on a schedule to generate fund health reports.
 """
 import os
+from urllib.parse import urlparse
+
 import anthropic
 
 client = anthropic.Anthropic()
 
 ANDUIN_MCP_URL = os.environ.get("ANDUIN_MCP_URL", "https://mcp.anduin.app/mcp")
-ANDUIN_TOKEN = os.environ["ANDUIN_OAUTH_TOKEN"]
+
+# --- Create Vault (once) ---
+# Scheduled agents MUST use mcp_oauth: the refresh block lets Anthropic renew
+# the access token between runs, so cron jobs don't die on token expiry.
+# (See Template 1 for the static_bearer quick-start alternative — no refresh.)
+vault = client.beta.vaults.create(display_name="anduin-reporter-credentials")
+client.beta.vaults.credentials.create(
+    vault_id=vault.id,
+    display_name="Anduin OAuth",
+    auth={
+        "type": "mcp_oauth",
+        "mcp_server_url": ANDUIN_MCP_URL,
+        "access_token": os.environ["ANDUIN_ACCESS_TOKEN"],
+        "expires_at": os.environ["ANDUIN_TOKEN_EXPIRES_AT"],  # ISO 8601
+        "refresh": {
+            "token_endpoint": os.environ["ANDUIN_TOKEN_ENDPOINT"],
+            "client_id": os.environ["ANDUIN_CLIENT_ID"],
+            "scope": "fundsub:read",
+            "refresh_token": os.environ["ANDUIN_REFRESH_TOKEN"],
+            "token_endpoint_auth": {
+                "type": "client_secret_basic",
+                "client_secret": os.environ["ANDUIN_CLIENT_SECRET"],
+            },
+        },
+    },
+)
 
 agent = client.beta.agents.create(
     name="anduin-fund-health-reporter",
-    model="claude-sonnet-4-6",
+    model="claude-sonnet-5",
     system="""You are a fund health reporting agent for the Anduin platform. \
 Generate comprehensive fund health reports by analyzing all accessible funds.
 
@@ -254,18 +379,30 @@ Rules:
 - Never fabricate data. Only report what tools return.
 - Always start with list_funds. Never guess fund IDs.
 - Process ALL funds, not just the first one.""",
-    mcp_servers={
-        "anduin": {
-            "type": "http",
-            "url": ANDUIN_MCP_URL,
-            "headers": {"Authorization": f"Bearer {ANDUIN_TOKEN}"}
-        }
-    }
+    mcp_servers=[
+        {"type": "url", "name": "anduin", "url": ANDUIN_MCP_URL},
+    ],
+    tools=[
+        {"type": "agent_toolset_20260401"},
+        {
+            "type": "mcp_toolset",
+            "mcp_server_name": "anduin",
+            # Auto-approve: scheduled runs have no human to confirm calls.
+            "default_config": {"permission_policy": {"type": "always_allow"}},
+        },
+    ],
 )
 
 environment = client.beta.environments.create(
     name="anduin-reporter-env",
-    packages=["python3"],
+    config={
+        "type": "cloud",
+        "networking": {
+            "type": "limited",
+            "allowed_hosts": [urlparse(ANDUIN_MCP_URL).hostname],
+            "allow_mcp_servers": True,
+        },
+    },
 )
 
 
@@ -274,6 +411,7 @@ def generate_report() -> str:
     session = client.beta.sessions.create(
         agent=agent.id,
         environment_id=environment.id,
+        vault_ids=[vault.id],
     )
 
     client.beta.sessions.events.send(
@@ -315,16 +453,42 @@ Anduin Compliance Monitor — Managed Agent
 Daily sweep for expiring AML/KYC and missing compliance docs.
 """
 import os
+from urllib.parse import urlparse
+
 import anthropic
 
 client = anthropic.Anthropic()
 
 ANDUIN_MCP_URL = os.environ.get("ANDUIN_MCP_URL", "https://mcp.anduin.app/mcp")
-ANDUIN_TOKEN = os.environ["ANDUIN_OAUTH_TOKEN"]
+
+# --- Create Vault (once) ---
+# Scheduled agents MUST use mcp_oauth so the token refreshes between daily
+# runs. (See Template 1 for the static_bearer quick-start alternative.)
+vault = client.beta.vaults.create(display_name="anduin-compliance-credentials")
+client.beta.vaults.credentials.create(
+    vault_id=vault.id,
+    display_name="Anduin OAuth",
+    auth={
+        "type": "mcp_oauth",
+        "mcp_server_url": ANDUIN_MCP_URL,
+        "access_token": os.environ["ANDUIN_ACCESS_TOKEN"],
+        "expires_at": os.environ["ANDUIN_TOKEN_EXPIRES_AT"],  # ISO 8601
+        "refresh": {
+            "token_endpoint": os.environ["ANDUIN_TOKEN_ENDPOINT"],
+            "client_id": os.environ["ANDUIN_CLIENT_ID"],
+            "scope": "fundsub:read",
+            "refresh_token": os.environ["ANDUIN_REFRESH_TOKEN"],
+            "token_endpoint_auth": {
+                "type": "client_secret_basic",
+                "client_secret": os.environ["ANDUIN_CLIENT_SECRET"],
+            },
+        },
+    },
+)
 
 agent = client.beta.agents.create(
     name="anduin-compliance-monitor",
-    model="claude-sonnet-4-6",
+    model="claude-sonnet-5",
     system="""You are a compliance monitoring agent for the Anduin platform. \
 Perform a daily sweep across all funds to identify compliance risks.
 
@@ -358,18 +522,30 @@ Rules:
 - Report ONLY issues found by tools. Never fabricate compliance data.
 - Always start with list_funds. Process every fund.
 - For each flagged order, provide the order ID and LP name for easy lookup.""",
-    mcp_servers={
-        "anduin": {
-            "type": "http",
-            "url": ANDUIN_MCP_URL,
-            "headers": {"Authorization": f"Bearer {ANDUIN_TOKEN}"}
-        }
-    }
+    mcp_servers=[
+        {"type": "url", "name": "anduin", "url": ANDUIN_MCP_URL},
+    ],
+    tools=[
+        {"type": "agent_toolset_20260401"},
+        {
+            "type": "mcp_toolset",
+            "mcp_server_name": "anduin",
+            # Auto-approve: scheduled runs have no human to confirm calls.
+            "default_config": {"permission_policy": {"type": "always_allow"}},
+        },
+    ],
 )
 
 environment = client.beta.environments.create(
     name="anduin-compliance-env",
-    packages=["python3"],
+    config={
+        "type": "cloud",
+        "networking": {
+            "type": "limited",
+            "allowed_hosts": [urlparse(ANDUIN_MCP_URL).hostname],
+            "allow_mcp_servers": True,
+        },
+    },
 )
 
 
@@ -378,6 +554,7 @@ def run_compliance_check() -> str:
     session = client.beta.sessions.create(
         agent=agent.id,
         environment_id=environment.id,
+        vault_ids=[vault.id],
     )
 
     client.beta.sessions.events.send(
@@ -419,16 +596,43 @@ Anduin Data Room Agent — Managed Agent Deployment
 Data room management via API.
 """
 import os
+from urllib.parse import urlparse
+
 import anthropic
 
 client = anthropic.Anthropic()
 
 ANDUIN_MCP_URL = os.environ.get("ANDUIN_MCP_URL", "https://mcp.anduin.app/mcp")
-ANDUIN_TOKEN = os.environ["ANDUIN_OAUTH_TOKEN"]
+
+# --- Create Vault ---
+# mcp_oauth auto-refreshes the token so the deployment keeps working after
+# token expiry. (See Template 1 for the static_bearer quick-start alternative.)
+vault = client.beta.vaults.create(display_name="anduin-dataroom-credentials")
+client.beta.vaults.credentials.create(
+    vault_id=vault.id,
+    display_name="Anduin OAuth",
+    auth={
+        "type": "mcp_oauth",
+        "mcp_server_url": ANDUIN_MCP_URL,
+        "access_token": os.environ["ANDUIN_ACCESS_TOKEN"],
+        "expires_at": os.environ["ANDUIN_TOKEN_EXPIRES_AT"],  # ISO 8601
+        "refresh": {
+            "token_endpoint": os.environ["ANDUIN_TOKEN_ENDPOINT"],
+            "client_id": os.environ["ANDUIN_CLIENT_ID"],
+            "scope": "dataroom:read dataroom:write",
+            "refresh_token": os.environ["ANDUIN_REFRESH_TOKEN"],
+            "token_endpoint_auth": {
+                "type": "client_secret_basic",
+                "client_secret": os.environ["ANDUIN_CLIENT_SECRET"],
+            },
+        },
+    },
+)
+print(f"Vault created: {vault.id}")
 
 agent = client.beta.agents.create(
     name="anduin-dataroom-agent",
-    model="claude-sonnet-4-6",
+    model="claude-sonnet-5",
     system="""You are an AI assistant specialized in managing virtual data rooms \
 on the Anduin platform.
 
@@ -458,19 +662,39 @@ Critical ID Rules:
 1. IDs are opaque strings — NEVER construct, guess, or modify them
 2. ALWAYS obtain IDs from tool outputs
 3. Call dr_list_entities first to understand the organization context""",
-    mcp_servers={
-        "anduin": {
-            "type": "http",
-            "url": ANDUIN_MCP_URL,
-            "headers": {"Authorization": f"Bearer {ANDUIN_TOKEN}"}
-        }
-    }
+    mcp_servers=[
+        {"type": "url", "name": "anduin", "url": ANDUIN_MCP_URL},
+    ],
+    tools=[
+        {"type": "agent_toolset_20260401"},
+        {
+            "type": "mcp_toolset",
+            "mcp_server_name": "anduin",
+            # Auto-approve the trusted Anduin tools for API-driven use.
+            "default_config": {"permission_policy": {"type": "always_allow"}},
+        },
+    ],
 )
 print(f"Data room agent created: {agent.id}")
 
 environment = client.beta.environments.create(
     name="anduin-dataroom-env",
-    packages=["python3"],
+    config={
+        "type": "cloud",
+        "networking": {
+            "type": "limited",
+            "allowed_hosts": [urlparse(ANDUIN_MCP_URL).hostname],
+            "allow_mcp_servers": True,
+        },
+    },
 )
 print(f"Environment created: {environment.id}")
+
+# When starting sessions for this agent, pass vault_ids so the Anduin
+# credential is injected:
+# session = client.beta.sessions.create(
+#     agent=agent.id,
+#     environment_id=environment.id,
+#     vault_ids=[vault.id],
+# )
 ```

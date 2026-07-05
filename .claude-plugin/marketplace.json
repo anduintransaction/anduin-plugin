@@ -9,7 +9,7 @@
       "name": "anduin",
       "source": "./plugins/anduin",
       "description": "Data room management and fund subscription review for the Anduin platform",
-      "version": "0.8.4"
+      "version": "0.8.5"
     }
   ]
 }
