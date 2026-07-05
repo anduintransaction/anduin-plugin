@@ -89,7 +89,7 @@ Available environments:
 
 ## Development Notes
 
-- Version is tracked in `.claude-plugin/plugin.json` and git tags (e.g., `v0.1.0`). Bump both when releasing.
+- Version is tracked in `plugins/anduin/.claude-plugin/plugin.json`, mirrored in the plugin entry of the root `.claude-plugin/marketplace.json`, and git tags (e.g., `v0.1.0`). Bump all three in lockstep when releasing — plugin.json and marketplace.json must never diverge.
 - Plugin name is `anduin` (in plugin.json). Marketplace name is `anduin-marketplace`.
 - Agent frontmatter fields: `name`, `description` (with examples), `model`, `color`, `tools`.
 - Skill frontmatter fields: `name`, `description`, and optionally `argument-hint`, `allowed-tools`.
