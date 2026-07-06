@@ -128,6 +128,7 @@ LP status lifecycle has two branches:
 - Then optionally: `LPPendingSubmission → LPSubmitted → LPCountersigned → LPCompleted`.
 - Countersigning is a separate action on top of `LPSubmitted` — signed-review approval does NOT countersign.
 - `LPPendingSubmission` is gated by `enableLpManualSubmitSubscription`.
+- "Is signed review on?" — `get_fund_review_config.isReviewEnabled` and the `review_workflow` family in `get_fund_feature_switches` always agree (same configuration). Whether LPs are BLOCKED from signing until review is the `unsigned_review` family, which additionally includes the submit-before-signing enforcement switch.
 
 ## `query_dashboard` Filters & Sort
 
