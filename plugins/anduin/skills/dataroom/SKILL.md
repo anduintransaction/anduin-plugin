@@ -90,6 +90,8 @@ Limits (over-limit/malformed input returns a tool error (`isError=true`) with th
 - "Show participants as a table" → `dr_list_participants` → `render_table` (name / role / status columns)
 - "Summarize this data room" → `dr_get_dataroom_detail` → `render_ui` (form sections, display-only)
 
+**Suppressing auto-rendered widgets on intermediate steps (`show_widget`).** On UI-capable public hosts, many `dr_` read/list tools ALSO render their result as a table widget automatically (alongside the markdown) — no separate `render_table` call needed. You can tell which: their input schema carries an optional **`show_widget`** boolean (default `true`), e.g. `dr_list_datarooms`, `dr_list_files`, `dr_list_participants`, `dr_search`, `dr_list_entities`, `dr_get_activity_log`, `dr_get_insights`. When such a call is an INTERMEDIATE step — you only need its rows to pick a data room / file id or feed the next tool — pass **`show_widget: false`** so it returns plain text only. Widgets don't collapse in the host UI, so rendering every intermediate step floods the conversation; suppressing them keeps a multi-step task readable. Leave it default (`true`) when the table IS the result you're presenting to the user.
+
 ## Tool Chaining Rules
 
 IDs flow between tools in a strict order. ALWAYS copy IDs exactly as returned — never shorten, modify, or invent IDs.

@@ -240,6 +240,8 @@ When a visual genuinely helps, render data as an interactive `ui://` widget with
 
 These are **display-only** (`interactive: false`) — they show values but CANNOT collect or send back input; use `update_form_fields` to change form data. Build the data with the read tools first (`query_dashboard`, `aggregate_orders`, `get_order_submission_data`), then render. Prefer plain markdown for a single fact or a short list.
 
+**Auto-rendered widgets + `show_widget`.** Separately, many read/list tools auto-render their result as a table widget (alongside the markdown) on UI-capable public hosts — you can tell by the optional **`show_widget`** boolean in their input schema (e.g. `query_dashboard`, `list_orders`, `search_orders_by_field`, `get_order_activity_log`, `get_form_progress`). Pass **`show_widget: false`** when the call is an intermediate step whose rows you only need to read or feed into the next tool — the result then comes back as plain text, so a multi-step task doesn't flood the conversation with widgets the user must scroll past (widgets don't collapse in the host UI). Leave it default (`true`) when the table is the answer you're showing the user.
+
 ## Best Practices
 
 - Use `query_dashboard` (not `list_orders`) for browsing — it returns richer data
