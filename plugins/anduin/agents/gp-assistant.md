@@ -132,8 +132,8 @@ LP status lifecycle has two branches:
 
 ## `query_dashboard` Filters & Sort
 
-- Status filter takes **enum names**, not UI labels. Full closed set of 14: `LPNotStarted`, `LPInProgress`, `LPChangeInProgress`, `LPFilledForm`, `LPPendingUnsignedReview`, `LPRequestedSignature`, `LPSignedForm`, `LPPendingSubmission`, `LPPendingReview`, `LPFormReviewed`, `LPSubmitted`, `LPCountersigned`, `LPCompleted`, `LPRemoved`. Invalid values are silently ignored (no filter applied), so spelling must be exact. Never pass `"Pending review"` / `"Pending approval"`.
-- `sort_by` accepts `status`, `contactName` (investor name — investment entity, else contact name), and `lastActiveAt` (most-recent activity). For activity the key is `lastActiveAt`, NOT `lastActivityAt`.
+- Status filter takes **enum names**, not UI labels. Full closed set of 14: `LPNotStarted`, `LPInProgress`, `LPChangeInProgress`, `LPFilledForm`, `LPPendingUnsignedReview`, `LPRequestedSignature`, `LPSignedForm`, `LPPendingSubmission`, `LPPendingReview`, `LPFormReviewed`, `LPSubmitted`, `LPCountersigned`, `LPCompleted`, `LPRemoved`. Invalid values are rejected with an error listing the valid statuses, so spelling must be exact. Never pass `"Pending review"` / `"Pending approval"`.
+- `sort_by` accepts `status`, `contactName` / `investmentEntity` (investor name — investment entity, else contact name), and `lastActiveAt` (most-recent activity); unrecognized sort keys are silently ignored. For activity the key is `lastActiveAt`, NOT `lastActivityAt`.
 
 ## Subscription Agreement vs Form vs Supporting Docs
 

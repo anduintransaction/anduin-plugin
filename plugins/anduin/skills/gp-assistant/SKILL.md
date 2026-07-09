@@ -57,11 +57,11 @@ Key points:
 `query_dashboard` filters accept **enum names**, not UI labels. The full closed set of 14 valid values is:
 `LPNotStarted`, `LPInProgress`, `LPChangeInProgress`, `LPFilledForm`, `LPPendingUnsignedReview`, `LPRequestedSignature`, `LPSignedForm`, `LPPendingSubmission`, `LPPendingReview`, `LPFormReviewed`, `LPSubmitted`, `LPCountersigned`, `LPCompleted`, `LPRemoved`.
 
-Invalid values are silently ignored (no filter applied), so spelling must be exact. Never pass UI labels like `"Pending review"` or `"Pending approval"`.
+Invalid values are rejected with an error listing the valid statuses, so spelling must be exact. Never pass UI labels like `"Pending review"` or `"Pending approval"`.
 
 ## Sort Fields
 
-`query_dashboard` accepts three `sort_by` keys: `status`, `contactName` (orders by investor name — investment entity, else contact name), and `lastActiveAt` (most-recent activity). For activity, the key is `lastActiveAt`, NOT `lastActivityAt`.
+`query_dashboard` accepts four `sort_by` keys: `status`, `contactName` and `investmentEntity` (both sort by investor name — investment entity, else contact name), and `lastActiveAt` (most-recent activity). Unrecognized sort keys are silently ignored (no error). For activity, the key is `lastActiveAt`, NOT `lastActivityAt`.
 
 ## Subscription Agreement vs Form vs Supporting Docs
 
@@ -159,10 +159,10 @@ These tools are a **presentation layer only**: values are shown for viewing and 
 | Tool | Renders (`ui://`) | Key inputs |
 |------|------|-----------|
 | `render_chart` | ECharts chart (`ui://anduin/chart`) | `title` (req), `echarts_option` (req — ECharts option object: series/xAxis/yAxis/tooltip/legend), `width` (opt, 200–1200, default 600), `height` (opt, 150–800, default 400) |
-| `render_table` | Data table (`ui://anduin/table`) | `title` (req), `columns` (req — `[{id, label, type?: text\|number\|tag-list\|badge\|link}]`), `rows` (req — `[{<column id>: value, …, id}]`; tag-list cells are JSON string arrays) |
+| `render_table` | Data table (`ui://anduin/table`) | `title` (req), `columns` (req — `[{id, label, type?: text\|number\|currency\|date\|badge\|progress\|tag-list\|link}]`), `rows` (req — `[{<column id>: value, …, id}]`; tag-list cells are JSON string arrays) |
 | `render_ui` | Form-layout view (`ui://anduin/form`) | `component: "form"` (req), `title` (req), `description` (opt), `sections` (req — `[{title, fields:[{alias, label, type: text\|number\|select\|checkbox\|date\|textarea, value, required?, options?}]}]`) |
 
-Limits (over-limit/malformed input returns a tool error (`isError=true`) with the validation message — fix the input or fall back to markdown): chart `echarts_option` ≤100 KB; table ≤20 columns / ≤200 rows; form ≤20 sections / ≤50 fields. Each column `id` and each field `alias` must be unique, and every `type` must be one of the values listed above — duplicate ids/aliases or an unrecognized/non-string `type` are rejected.
+Limits (over-limit/malformed input returns a tool error (`isError=true`) with the validation message — fix the input or fall back to markdown): chart `echarts_option` ≤100 KB (chart `width`/`height` outside their ranges are clamped to the range, not rejected); table ≤20 columns / ≤200 rows; form ≤20 sections / ≤50 fields total across all sections. Each column `id` and each field `alias` must be unique, and every `type` must be one of the values listed above — duplicate ids/aliases or an unrecognized/non-string `type` are rejected.
 
 **When to render (vs. plain markdown):** render when a visual genuinely helps — a bar/pie chart of commitments by close, a sortable table of LP orders, a form-style snapshot of an order's key fields. Prefer plain markdown for a single fact or a short list, and when running headless. Build the data with the read tools FIRST, then pass it to a render tool, and STILL give a one-line text summary so non-UI clients stay functional.
 

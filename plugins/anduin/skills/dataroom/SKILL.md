@@ -24,23 +24,23 @@ Roles surface to users as Admin / Member / Contributor / Observer. Call `dr_chec
 
 ## MCP Tools by Category
 
-All tools require OAuth2 scope `dataroom:read` or `dataroom:write`. Tools are prefixed with `dr_` in the MCP server.
+Most tools require OAuth2 scope `dataroom:read` or `dataroom:write`. The four destructive tools — `dr_archive_dataroom`, `dr_delete_items`, `dr_remove_users`, `dr_modify_user_permissions` — require **`dataroom:admin`**: a `dataroom:write` token cannot call them, and the user must re-consent with the admin scope to unlock them. Scopes are hierarchical (admin ⊃ write ⊃ read). OAuth scope and data-room role are independent gates — both must allow an action. Tools are prefixed with `dr_` in the MCP server.
 
 ### Entity & Data Room Discovery (dataroom:read)
 - `dr_list_entities` — list all entities the user belongs to, with subscription plans and data room counts
 - `dr_list_datarooms` — list all data rooms accessible to the user
 - `dr_get_dataroom_detail` — get detailed information about a specific data room
 
-### Data Room Operations (dataroom:write)
-- `dr_create_dataroom` — create a new data room; `name` (req), `entity_id` (optional, pattern `^ent[a-z0-9]{13}$`) — auto-resolves for single-entity users, so only call `dr_list_entities` first when the user has multiple entities
-- `dr_rename_dataroom` — rename an existing data room
-- `dr_archive_dataroom` — archive or unarchive a data room
+### Data Room Operations
+- `dr_create_dataroom` — create a new data room; `name` (req), `entity_id` (optional, pattern `^ent[a-z0-9]{13}$`) — auto-resolves for single-entity users, so only call `dr_list_entities` first when the user has multiple entities (dataroom:write)
+- `dr_rename_dataroom` — rename an existing data room (dataroom:write)
+- `dr_archive_dataroom` — archive or unarchive a data room (dataroom:admin)
 
 ### Participant Management
 - `dr_list_participants` — list all participants with roles and status (dataroom:read)
 - `dr_invite_users` — invite users by email; `dataroom_id` (req), `emails` (req, array, ≥1), `role` (optional — admin / member / guest (=Contributor) / observer (=Observer); defaults to Contributor (internally Guest) when omitted) (dataroom:write)
-- `dr_remove_users` — remove users from a data room (dataroom:write)
-- `dr_modify_user_permissions` — change a user's role; `dataroom_id`, `user_id` (from dr_list_participants), `role` (admin / member / guest (=Contributor) / observer (=Observer)) (dataroom:write)
+- `dr_remove_users` — remove users from a data room (dataroom:admin)
+- `dr_modify_user_permissions` — change a user's role; `dataroom_id`, `user_id` (from dr_list_participants), `role` (admin / member / guest (=Contributor) / observer (=Observer)) (dataroom:admin)
 - `dr_check_my_permissions` — check your current role and the actions you can/cannot perform (dataroom:read)
 - `dr_list_groups` — list user groups in a data room (dataroom:read)
 
@@ -50,7 +50,7 @@ All tools require OAuth2 scope `dataroom:read` or `dataroom:write`. Tools are pr
 - `dr_get_file_download_url` — get a temporary presigned download URL for a data room file (expires after 15 minutes); takes `file_id` (from dr_list_files or dr_search), NOT dataroom_id (dataroom:read)
 - `dr_create_folder` — create a new folder (dataroom:write)
 - `dr_rename_item` — rename a file or folder (dataroom:write)
-- `dr_delete_items` — delete files and/or folders (moves to trash); `dataroom_id` (req), `file_ids` (array, optional), `folder_ids` (array, optional) — at least one of the two must be non-empty (dataroom:write)
+- `dr_delete_items` — delete files and/or folders (moves to trash); `dataroom_id` (req), `file_ids` (array, optional), `folder_ids` (array, optional) — at least one of the two must be non-empty (dataroom:admin)
 - `dr_restore_items` — restore previously deleted FILES; `dataroom_id` (req), `file_ids` (array). Folder restoration is NOT supported — passing `folder_ids` errors the entire call (dataroom:write)
 
 ### Document Processing (dataroom:read)
@@ -79,10 +79,10 @@ These tools are a **presentation layer only**: values are shown for viewing and 
 | Tool | Renders (`ui://`) | Key inputs |
 |------|------|-----------|
 | `render_chart` | ECharts chart (`ui://anduin/chart`) | `title` (req), `echarts_option` (req — ECharts option object: series/xAxis/yAxis/tooltip/legend), `width` (opt, 200–1200, default 600), `height` (opt, 150–800, default 400) |
-| `render_table` | Data table (`ui://anduin/table`) | `title` (req), `columns` (req — `[{id, label, type?: text\|number\|tag-list\|badge\|link}]`), `rows` (req — `[{<column id>: value, …, id}]`; tag-list cells are JSON string arrays) |
+| `render_table` | Data table (`ui://anduin/table`) | `title` (req), `columns` (req — `[{id, label, type?: text\|number\|currency\|date\|badge\|progress\|tag-list\|link}]`), `rows` (req — `[{<column id>: value, …, id}]`; tag-list cells are JSON string arrays) |
 | `render_ui` | Form-layout view (`ui://anduin/form`) | `component: "form"` (req), `title` (req), `description` (opt), `sections` (req — `[{title, fields:[{alias, label, type: text\|number\|select\|checkbox\|date\|textarea, value, required?, options?}]}]`) |
 
-Limits (over-limit/malformed input returns a tool error (`isError=true`) with the validation message — fix the input or fall back to markdown): chart `echarts_option` ≤100 KB; table ≤20 columns / ≤200 rows; form ≤20 sections / ≤50 fields. Each column `id` and each field `alias` must be unique, and every `type` must be one of the values listed above — duplicate ids/aliases or an unrecognized/non-string `type` are rejected.
+Limits (over-limit/malformed input returns a tool error (`isError=true`) with the validation message — fix the input or fall back to markdown): chart `echarts_option` ≤100 KB (chart `width`/`height` outside their ranges are clamped to the range, not rejected); table ≤20 columns / ≤200 rows; form ≤20 sections / ≤50 fields total across all sections. Each column `id` and each field `alias` must be unique, and every `type` must be one of the values listed above — duplicate ids/aliases or an unrecognized/non-string `type` are rejected.
 
 **When to render (vs. plain markdown):** render when a visual genuinely helps — a chart of file engagement or activity over time, a sortable table of participants or files, a form-style snapshot of a data room's details. Prefer plain markdown for a single fact or a short list, and when running headless. Build the data with the read tools FIRST, then pass it to a render tool, and STILL give a one-line text summary so non-UI clients stay functional.
 
