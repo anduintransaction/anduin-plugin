@@ -224,7 +224,7 @@ When assisting with subscription form updates:
 
 ## Data Presentation
 
-Since MCP tools return structured data, present results as:
+If a widget already displays the data (an auto-rendered tool result or a render-tool call), do NOT repeat it — give a 1–2 sentence takeaway and move on. Otherwise, since MCP tools return structured data, present results as:
 - **Markdown tables** for tabular data (orders, participants, field comparisons)
 - **Bullet lists** for status summaries and document lists
 - **Code blocks** for raw IDs or technical data
@@ -232,7 +232,7 @@ Since MCP tools return structured data, present results as:
 
 ## Visualizing Data (UI Rendering)
 
-When a visual genuinely helps, render data as an interactive `ui://` widget with the display-only render tools. **Availability is environment-dependent — rely on your live tool list, never assume:** these tools exist only on Anduin servers that have shipped UI rendering (rolled out per environment, local/staging ahead of production) and only when your grant includes the **`mcp:render`** scope (independent of `fundsub:*`). Before offering a rendered view, confirm the render tool is actually available; if it isn't, the environment hasn't enabled it yet — quietly fall back to markdown. They render as sandboxed iframes in UI-capable hosts (Claude Code, Cowork) and are NOT shown in headless/text contexts, so ALWAYS also give a short markdown summary.
+When a visual genuinely helps, render data as an interactive `ui://` widget with the display-only render tools. **Availability is environment-dependent — rely on your live tool list, never assume:** these tools exist only on Anduin servers that have shipped UI rendering (rolled out per environment, local/staging ahead of production) and only when your grant includes the **`mcp:render`** scope (independent of `fundsub:*`). Before offering a rendered view, confirm the render tool is actually available; if it isn't, the environment hasn't enabled it yet — quietly fall back to markdown. They render as sandboxed iframes in UI-capable hosts (Claude Code, Cowork) and are NOT shown in headless/text contexts, so ALWAYS pair a widget with a 1–2 sentence text takeaway — but NEVER duplicate the widget's rows as a markdown table (full tables are the fallback for when no widget displays).
 
 - `render_chart` — `title` + `echarts_option` (ECharts option object); optional `width`/`height`. For commitments-by-close, status breakdowns, etc.
 - `render_table` — `title` + `columns` (`[{id, label, type?}]`) + `rows`. For LP order lists, field comparisons.
@@ -240,7 +240,7 @@ When a visual genuinely helps, render data as an interactive `ui://` widget with
 
 These are **display-only** (`interactive: false`) — they show values but CANNOT collect or send back input; use `update_form_fields` to change form data. Build the data with the read tools first (`query_dashboard`, `aggregate_orders`, `get_order_submission_data`), then render. Prefer plain markdown for a single fact or a short list.
 
-**Auto-rendered widgets + `show_widget`.** Separately, many read/list tools auto-render their result as a table widget (alongside the markdown) on UI-capable public hosts — you can tell by the optional **`show_widget`** boolean in their input schema (e.g. `query_dashboard`, `list_orders`, `search_orders_by_field`, `get_order_activity_log`, `get_form_progress`). Pass **`show_widget: false`** when the call is an intermediate step whose rows you only need to read or feed into the next tool — the result then comes back as plain text, so a multi-step task doesn't flood the conversation with widgets the user must scroll past (widgets don't collapse in the host UI). Leave it default (`true`) when the table is the answer you're showing the user.
+**Auto-rendered widgets + `show_widget`.** Separately, many read/list tools auto-render their result as a table widget (alongside the markdown) on UI-capable public hosts — you can tell by the optional **`show_widget`** boolean in their input schema (e.g. `query_dashboard`, `list_orders`, `search_orders_by_field`, `get_order_activity_log`, `get_form_progress`). Pass **`show_widget: false`** when the call is an intermediate step whose rows you only need to read or feed into the next tool — the result then comes back as plain text, so a multi-step task doesn't flood the conversation with widgets the user must scroll past (widgets don't collapse in the host UI). Leave it default (`true`) when the table is the answer you're showing the user — then reply with a short takeaway only; do NOT repeat the widget's rows as a markdown table.
 
 ## Best Practices
 
