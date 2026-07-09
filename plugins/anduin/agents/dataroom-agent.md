@@ -67,6 +67,8 @@ You help users with:
 
 You access data room operations through the Anduin MCP server. All tool names are prefixed with `dr_`.
 
+Most tools need the `dataroom:read` or `dataroom:write` OAuth2 scope. The four destructive tools — `dr_archive_dataroom`, `dr_delete_items`, `dr_remove_users`, `dr_modify_user_permissions` — additionally need **`dataroom:admin`**: a write-only grant cannot call them. If one of these fails with a permission/scope error, the user's grant lacks the admin scope — they must reconnect and approve `dataroom:admin`. OAuth scope and data-room role are independent gates; both must allow the action.
+
 ### Tool Chaining — IDs Flow Between Tools
 
 ```
@@ -131,14 +133,14 @@ When a user starts a conversation about data rooms:
 5. Call `dr_invite_users` with confirmed details
 6. Report success/failure for each invitation
 
-Always confirm destructive actions (remove, role change) before executing.
+Always confirm destructive actions (remove, role change) before executing. Both `dr_remove_users` and `dr_modify_user_permissions` require the `dataroom:admin` scope.
 
 ## File Organization Workflow
 
 1. Call `dr_list_files` to see current structure
 2. Suggest folder structure based on common patterns (by date, by type, by project)
 3. Create folders one at a time with `dr_create_folder(dataroom_id, name, parent_folder_id?)`, confirming each
-4. For deletion: always confirm — deleted files go to trash and are recoverable via `dr_restore_items`, but deleted folders cannot currently be restored
+4. For deletion: always confirm — deleted files go to trash and are recoverable via `dr_restore_items`, but deleted folders cannot currently be restored (`dr_delete_items` requires the `dataroom:admin` scope)
 5. Use `dr_search` to quickly find specific files
 
 ## Analytics Workflow

@@ -54,11 +54,13 @@ You'll be asked to approve access scopes:
 |---|---|
 | `fundsub:read` | View fund subscription data (orders, forms, documents) |
 | `fundsub:write` | Make changes to subscriptions (update forms, tags, invite managers) |
+| `fundsub:admin` | Full administrative access to fund subscriptions (currently unlocks no tools beyond `fundsub:write`) |
 | `dataroom:read` | View data rooms (files, participants, analytics) |
-| `dataroom:write` | Make changes to data rooms (create, invite, upload, delete) |
+| `dataroom:write` | Routine data room changes (create rooms and folders, rename, invite users, restore deleted files) |
+| `dataroom:admin` | Destructive data room actions (archive rooms, delete files/folders, remove users, change roles) |
 | `mcp:render` | Show interactive charts, tables, and forms as visual widgets (display-only) |
 
-Approve whichever scopes match the work you need to do. You only see tools relevant to your approved scopes. The visual widgets from `mcp:render` appear in apps that support them (Claude Code, Cowork); elsewhere you still get the same data as text.
+Approve whichever scopes match the work you need to do. Scopes are hierarchical within each family — admin includes write, write includes read. You only see tools relevant to your approved scopes. The visual widgets from `mcp:render` appear in apps that support them (Claude Code, Cowork); elsewhere you still get the same data as text.
 
 ## Usage
 
@@ -92,7 +94,7 @@ Just describe what you need in plain language. The right assistant activates aut
 |---|---|
 | **Anduin MCP not showing** | Reinstall the plugin and restart the app. |
 | **"Unauthorized" or login issues** | Your session may have expired. Restart the app to sign in again. |
-| **"Insufficient scopes" error** | You need broader permissions. Restart and approve additional scopes when prompted, or ask your admin for access. |
+| **"Insufficient scopes" error** | You need broader permissions. Restart and approve additional scopes when prompted, or ask your admin for access. Destructive data room actions (archive, delete, remove users, change roles) specifically require the `dataroom:admin` scope. |
 | **Tools not showing up** | Check that the server is connected (in Claude Code: run `/mcp`). You only see tools matching your approved scopes. |
 
 Need help? Ask Claude: *"How do I connect to Anduin?"*
