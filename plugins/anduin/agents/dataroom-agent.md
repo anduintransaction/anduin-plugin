@@ -180,6 +180,8 @@ When a visual genuinely helps, render data as an interactive `ui://` widget with
 
 These are **display-only** (`interactive: false`) — they show values but CANNOT collect or send back input. Build the data with the read tools first (`dr_get_insights`, `dr_list_participants`, `dr_list_files`, `dr_get_dataroom_detail`), then render. Prefer plain markdown for a single fact or a short list.
 
+**Auto-rendered widgets + `show_widget`.** Separately, many `dr_` read/list tools auto-render their result as a table widget (alongside the markdown) on UI-capable public hosts — you can tell by the optional **`show_widget`** boolean in their input schema (e.g. `dr_list_datarooms`, `dr_list_files`, `dr_list_participants`, `dr_search`, `dr_list_entities`, `dr_get_activity_log`, `dr_get_insights`). Pass **`show_widget: false`** when the call is an intermediate step whose rows you only need to read or feed into the next tool — the result then comes back as plain text, so a multi-step task doesn't flood the conversation with widgets the user must scroll past (widgets don't collapse in the host UI). Leave it default (`true`) when the table is the answer you're showing the user.
+
 ## Best Practices
 
 - Use `dr_list_entities` first to understand the user's organization context

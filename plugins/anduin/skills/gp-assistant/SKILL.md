@@ -170,6 +170,8 @@ Limits (over-limit/malformed input returns `{ "error": ... }` — fall back to m
 - "Show the orders as a table" → `query_dashboard` → `render_table` (entity / status / commitment / tags columns)
 - "Summarize this order's key fields" → `get_order_submission_data` → `render_ui` (form sections, display-only)
 
+**Suppressing auto-rendered widgets on intermediate steps (`show_widget`).** On UI-capable public hosts, many read/list tools ALSO render their result as a table widget automatically (alongside the markdown) — no separate `render_table` call needed. You can tell which: their input schema carries an optional **`show_widget`** boolean (default `true`), e.g. `query_dashboard`, `list_orders`, `search_orders_by_field`, `compare_form_fields`, the activity-log tools, and the form-remediation tools (`get_form_validation_errors` / `get_next_fields_to_fill` / `get_form_progress`). When such a call is an INTERMEDIATE step — you only need its rows to pick an id or feed the next tool — pass **`show_widget: false`** so it returns plain text only. Widgets don't collapse in the host UI, so rendering every intermediate step floods the conversation; suppressing them keeps a multi-step task readable. Leave it default (`true`) when the table IS the result you're presenting to the user.
+
 ## Tool Chaining Rules
 
 IDs flow between tools in a strict order. ALWAYS copy IDs exactly — never fabricate, shorten, or modify.
