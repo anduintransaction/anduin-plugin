@@ -1,7 +1,7 @@
 {
   "name": "anduin",
-  "version": "0.8.5",
-  "description": "Anduin plugin for data room management, fund subscription review, and managed agent deployment via Claude Code",
+  "version": "0.9.0",
+  "description": "Anduin plugin for data room management and fund subscription review via Claude Code",
   "author": {
     "name": "Anduin Transactions",
     "url": "https://anduintransact.com"
