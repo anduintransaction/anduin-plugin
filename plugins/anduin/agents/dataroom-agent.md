@@ -154,8 +154,8 @@ Always confirm destructive actions (remove, role change) before executing. Both 
 5. For groups: `dr_list_groups` then `dr_get_insights(dimension="group")`
 6. For activity: `dr_get_activity_log` for recent events
 7. For trends: `dr_get_timeline` for time-based patterns
-8. Present data as well-formatted markdown tables
-9. Summarize key findings after each data retrieval
+8. Let the auto-rendered widgets carry the tables — use markdown tables only when no widget displays
+9. Summarize key findings after each data retrieval (1–2 sentences; don't repeat the widget's rows)
 
 ## Document Reading Workflow
 
@@ -174,7 +174,7 @@ When a user asks to read, view, or analyze a file in a data room:
 
 ## Visualizing Data (UI Rendering)
 
-When a visual genuinely helps, render data as an interactive `ui://` widget with the display-only render tools. **Availability is environment-dependent — rely on your live tool list, never assume:** these tools exist only on Anduin servers that have shipped UI rendering (rolled out per environment, local/staging ahead of production) and only when your grant includes the **`mcp:render`** scope (independent of `dataroom:*`). Before offering a rendered view, confirm the render tool is actually available; if it isn't, the environment hasn't enabled it yet — quietly fall back to markdown. They render as sandboxed iframes in UI-capable hosts (Claude Code, Cowork) and are NOT shown in headless/text contexts, so ALWAYS also give a short markdown summary. (These tools are NOT prefixed with `dr_`.)
+When a visual genuinely helps, render data as an interactive `ui://` widget with the display-only render tools. **Availability is environment-dependent — rely on your live tool list, never assume:** these tools exist only on Anduin servers that have shipped UI rendering (rolled out per environment, local/staging ahead of production) and only when your grant includes the **`mcp:render`** scope (independent of `dataroom:*`). Before offering a rendered view, confirm the render tool is actually available; if it isn't, the environment hasn't enabled it yet — quietly fall back to markdown. They render as sandboxed iframes in UI-capable hosts (Claude Code, Cowork) and are NOT shown in headless/text contexts, so ALWAYS pair a widget with a 1–2 sentence text takeaway — but NEVER duplicate the widget's rows as a markdown table (full tables are the fallback for when no widget displays). (These tools are NOT prefixed with `dr_`.)
 
 - `render_chart` — `title` + `echarts_option` (ECharts option object); optional `width`/`height`. For file-engagement or activity-over-time charts.
 - `render_table` — `title` + `columns` (`[{id, label, type?}]`) + `rows`. For participant, file, or insights tables.
@@ -182,7 +182,7 @@ When a visual genuinely helps, render data as an interactive `ui://` widget with
 
 These are **display-only** (`interactive: false`) — they show values but CANNOT collect or send back input. Build the data with the read tools first (`dr_get_insights`, `dr_list_participants`, `dr_list_files`, `dr_get_dataroom_detail`), then render. Prefer plain markdown for a single fact or a short list.
 
-**Auto-rendered widgets + `show_widget`.** Separately, many `dr_` read/list tools auto-render their result as a table widget (alongside the markdown) on UI-capable public hosts — you can tell by the optional **`show_widget`** boolean in their input schema (e.g. `dr_list_datarooms`, `dr_list_files`, `dr_list_participants`, `dr_search`, `dr_list_entities`, `dr_get_activity_log`, `dr_get_insights`). Pass **`show_widget: false`** when the call is an intermediate step whose rows you only need to read or feed into the next tool — the result then comes back as plain text, so a multi-step task doesn't flood the conversation with widgets the user must scroll past (widgets don't collapse in the host UI). Leave it default (`true`) when the table is the answer you're showing the user.
+**Auto-rendered widgets + `show_widget`.** Separately, many `dr_` read/list tools auto-render their result as a table widget (alongside the markdown) on UI-capable public hosts — you can tell by the optional **`show_widget`** boolean in their input schema (e.g. `dr_list_datarooms`, `dr_list_files`, `dr_list_participants`, `dr_search`, `dr_list_entities`, `dr_get_activity_log`, `dr_get_insights`). Pass **`show_widget: false`** when the call is an intermediate step whose rows you only need to read or feed into the next tool — the result then comes back as plain text, so a multi-step task doesn't flood the conversation with widgets the user must scroll past (widgets don't collapse in the host UI). Leave it default (`true`) when the table is the answer you're showing the user — then reply with a short takeaway only; do NOT repeat the widget's rows as a markdown table.
 
 ## Best Practices
 
@@ -191,4 +191,4 @@ These are **display-only** (`interactive: false`) — they show values but CANNO
 - Navigate directory trees with `dr_list_files` and folder_id
 - Check participants before inviting to avoid duplicates
 - Prefer `dr_archive_dataroom` over deletion when data should be preserved
-- When presenting tabular data, use markdown tables with clear headers
+- When presenting tabular data that no widget already displays, use markdown tables with clear headers
