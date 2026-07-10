@@ -1,7 +1,7 @@
 {
   "name": "anduin",
   "version": "0.9.1",
-  "description": "Anduin plugin for data room management and fund subscription review via Claude Code",
+  "description": "Anduin plugin for data room management and fund subscription review — works with Claude Code and Cowork",
   "author": {
     "name": "Anduin Transactions",
     "url": "https://anduintransact.com"
