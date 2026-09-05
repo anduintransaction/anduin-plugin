@@ -1,7 +1,8 @@
 # ChatGPT and Codex Support Plan
 
 **Status:** In progress — Phase 0A released; Phase 1 review fixes published in [PR #55982](https://github.com/anduintransaction/stargazer/pull/55982), under verification/review;
-live host validation and public-distribution approval remain open. See the readiness gates below.
+Phase 2.1–2.3 content implemented with offline evaluations, awaiting Claude host regression. Live host validation
+and public-distribution approval remain open. See the readiness gates below.
 **Last updated:** 2026-09-05
 **Repositories:** `mcp-ui-scala`, `stargazer`, `anduin-plugin`
 **Primary production endpoint:** `https://mcp.anduin.app/mcp`
@@ -37,9 +38,11 @@ Unit tests, a real local Hydra, and a published SDK do not prove a live ChatGPT 
 | G5 — Production/public launch | Blocked on G2–G4 | Exact deployed revision, production synthetic-account evaluations, required approvals, monitoring/rollback rehearsal, accepted listing; release owner |
 
 Next: close G1, then deploy the default-off issuer candidate to the selected non-production environment and execute
-G2. Phase 2.1–2.3 (canonical skill content and thin Claude adapters) can proceed independently now. Phase 2.4 and
-Phase 3 wiring need the real connection and host observations. Begin G3 in parallel: policy controls are a separately
-scoped implementation track if needed, not functionality already supplied by Phase 1.
+G2. Phase 2.1–2.3 content and thin Claude adapters are implemented on `codex/canonical-anduin-skills`; complete
+review and clean-install Claude Code/Cowork regression before merging that change. The
+[15-case offline evaluation](../evaluations/canonical-skills-phase2a.md) is content evidence, not host acceptance.
+Phase 2.4 and Phase 3 wiring still need the real connection and host observations. Begin G3 in parallel: policy
+controls are a separately scoped implementation track if needed, not functionality already supplied by Phase 1.
 
 A workspace-private pilot is a separate, explicitly approved milestone, not completion of the universal-public
 goal. If a host or public listing cannot be supported, record the evidence and obtain an explicit scope decision;
@@ -52,11 +55,18 @@ role labels here are not assignments. Historical probes below retain their origi
 ### G1 revision evidence (2026-09-05)
 
 - [Stargazer PR #55982](https://github.com/anduintransaction/stargazer/pull/55982), branch `codex/openai-phase-1`,
-  head `93ba809fbe2e9a6133f39489fb0b119d1d491166`, base `323f1c0dcb5d329b59d0b0ed8bdd0c7837dcc8e9`.
+  current head `f1e86a9331b110905a725dadefc682804b9f2929`, base `323f1c0dcb5d329b59d0b0ed8bdd0c7837dcc8e9`.
+- CI on `93ba809fbe2e9a6133f39489fb0b119d1d491166` passed build but failed style: the security fix left
+  `HttpContextUtils.getHttpScheme` unused, so downstream tests/IT were skipped. Follow-up `f1e86a9` removes only
+  that dead helper, its private codec and imports (26 deleted lines). Exact-head whole-repository search found no
+  remaining callers. Targeted Core compile, formatting and 16 report-independent lint rules passed in an isolated
+  checkout; fresh CI supplies the remaining whole-repository unused-code proof.
+  [Replacement CI run](https://github.com/anduintransaction/stargazer/actions/runs/33935132411) was queued after push;
+  inspect its current result before merge.
 - The original implementation and review-fix commits rebased without changes (`git range-diff` equality).
   The unrelated AI Usage dashboard edit is excluded; its original checkout/patch is preserved separately because
   it conflicts with upstream's dashboard work.
-- Local verification on that rebased head: **669 Scala tests passed** — all MCP unit tests (458), selected Hydra
+- Local verification on rebased head `93ba809f` (before the deletion-only CI follow-up): **669 Scala tests passed** — all MCP unit tests (458), selected Hydra
   consent/DCR/metadata tests (58), shared file/folder metadata tests (16), Data Room insight/widget/failure tests (33),
   LP review execution/schema tests (89), and real-Hydra `McpOAuthConsentFlowInteg` (15). The latter uses real Hydra
   with production consent logic and a Tapir HTTP stub; login is accepted via the Admin API, not a browser/edge test.
@@ -95,7 +105,8 @@ The plugin is currently Claude-specific at its packaging and documentation bound
 - `plugins/anduin/.claude-plugin/plugin.json` defines the Claude plugin.
 - `plugins/anduin/.mcp.json` points at the production US MCP endpoint.
 - `plugins/anduin/agents/*.md` contain Claude-specific `model`, `tools`, and activation configuration.
-- `plugins/anduin/skills/*/SKILL.md` already contain most of the portable domain knowledge needed by ChatGPT and Codex.
+- `plugins/anduin/skills/*/SKILL.md` now own portable workflows, permission and confirmation rules, safe recovery,
+  and presentation behavior; Claude agent bodies load these skills instead of duplicating those rules.
 - `README.md` documents only Claude Code and Cowork installation and troubleshooting.
 
 The server already provides most of the required foundation:
@@ -540,6 +551,11 @@ production v1 allowlist remains unchanged. Final navigation proof uses the produ
 **Dependency:** Sections 2.1–2.3 can start before deployed OAuth validation. Section 2.4 is complete only after G4
 proves connection resolution; writing a YAML file alone does not close it.
 
+**Content evidence (2026-09-05):** 2.1–2.3 implemented with valid skill frontmatter, preserved Claude model/tool
+configuration, unchanged Claude manifests/MCP configuration, and 15 passing independent offline decision cases.
+See the [evaluation and outstanding host checks](../evaluations/canonical-skills-phase2a.md). Actual Claude
+activation/loading is not yet verified; OpenAI dependencies and the full Phase 2 exit criteria remain open.
+
 OpenAI supports skills but does not import Claude `agents/` definitions. Move reusable behavior into the two existing skills while keeping Claude adapters.
 
 ### 2.1 Consolidate domain guidance
@@ -905,6 +921,10 @@ Deploy and verify this PR before publishing/enabling the OpenAI package. Canonic
 earlier with Claude regression evidence. `McpUi.version` already pins released `0.5.0`.
 
 ### PR 2a: `anduin-plugin` — Canonical skills (can start before G2)
+
+Implemented on `codex/canonical-anduin-skills`, based on the plan-revision branch `chatgpt-codex/phase-0` (PR #24).
+Keep this content change separately reviewable; retarget to `main` after its plan prerequisite merges. Offline
+verification is recorded; clean-install Claude Code/Cowork evidence remains required before merge.
 
 - Consolidated provider-neutral skills.
 - Thin Claude agent adapters.
