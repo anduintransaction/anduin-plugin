@@ -23,7 +23,12 @@ The plugin connects to Anduin's MCP server (hardcoded to Production US by defaul
 
 ## Testing Changes
 
-Since this is a content-only plugin with no test suite, verify manually:
+Use the synthetic cases and regression checklist in
+`docs/evaluations/canonical-skills-phase2a.md` for content changes. Structural validation and simulated decisions
+do not replace installation, OAuth, or renderer tests in the actual hosts. Do not execute synthetic writes against
+the default production connection.
+
+For an authorized host smoke test, verify manually:
 
 ```bash
 # Reinstall after changes
@@ -39,7 +44,8 @@ Since this is a content-only plugin with no test suite, verify manually:
 
 ## Plugin Architecture
 
-This is a **content-only plugin** — no build step, no dependencies, no tests. All files are markdown or JSON.
+This is a **content-only plugin** — no runtime build step or application dependencies. Runtime files are Markdown
+or JSON; versioned synthetic evaluation fixtures live under `docs/evaluations/`.
 
 ```
 .claude-plugin/marketplace.json       — Marketplace manifest (lists all plugins)
@@ -47,16 +53,23 @@ This is a **content-only plugin** — no build step, no dependencies, no tests. 
 plugins/anduin/                       — Anduin platform plugin
   .claude-plugin/plugin.json          — Plugin manifest (name, version, description)
   .mcp.json                           — MCP server config (hardcoded to Production US)
-  agents/                             — Autonomous agent definitions (spawned as subagents)
+  agents/                             — Thin Claude adapters (spawned as subagents)
     gp-assistant.md                   — Fund subscription agent (model: sonnet, tools: mcp__plugin_anduin_anduin__*)
     dataroom-agent.md                 — Data room agent (model: sonnet, tools: mcp__plugin_anduin_anduin__*)
-  skills/                             — Domain knowledge loaded into context on demand
-    gp-assistant/SKILL.md             — GP domain terminology, tool catalog, workflows
-    dataroom/SKILL.md                 — Data room domain terminology, tool catalog, workflows
+  skills/                             — Canonical behavior loaded into context on demand
+    gp-assistant/SKILL.md             — GP workflows, terminology, permissions, and safety
+    dataroom/SKILL.md                 — Data Room workflows, terminology, permissions, and safety
 ```
 
 **Key patterns:**
-- Each domain (GP, Data Room) has both an agent (`.md` in `agents/`) and a skill (`.md` in `skills/`). The agent defines behavior, model, and tool access. The skill provides domain knowledge that gets loaded into context. The agent references MCP tools prefixed `dr_` (data room) or unprefixed (fund subscription).
+- Each domain has one canonical skill and a thin Claude adapter. The adapter preserves activation, model, and tool
+  access, then invokes `anduin:gp-assistant` or `anduin:dataroom` with the already-allowed `Skill` tool before domain
+  work. If loading fails, it stops rather than running without the shared rules. Keep workflows, permission rules,
+  confirmation, recovery, and presentation guidance in the skill, not a second copy in the adapter.
+- Canonical skills use wire names (`dr_` for Data Room, unprefixed for fund subscription). Resolve them against the
+  current host's provided Anduin catalog; do not copy Claude-specific MCP prefixes into shared behavior.
+- OpenAI connection declarations and packaging are a later gated change. Provider-neutral content alone does not
+  establish ChatGPT or Codex installation support; see `docs/plans/chatgpt-codex-support.md`.
 
 ## MCP Server Configuration
 
@@ -87,7 +100,13 @@ Available environments:
 - Skill frontmatter fields: `name`, `description`, and optionally `argument-hint`, `allowed-tools`.
 - OAuth2 scopes: `fundsub:read/write/admin`, `dataroom:read/write/admin` (hierarchy admin > write > read), plus `mcp:render` (flat, non-hierarchical) which grants ONLY the three display-only UI render tools and no data access. The four destructive dataroom tools (`dr_archive_dataroom`, `dr_delete_items`, `dr_remove_users`, `dr_modify_user_permissions`) are gated on `dataroom:admin` — a `dataroom:write` token cannot call them. `fundsub:admin` currently unlocks nothing beyond `fundsub:write` on the public server.
 - MCP tools are filtered by the user's approved OAuth2 scopes at runtime.
-- UI render tools (`render_chart`, `render_table`, `render_ui`) are cross-domain, UNPREFIXED, and gated by `mcp:render`. They are MCP Apps tools: each returns `structuredContent` + a text fallback and points at a `ui://anduin/{chart,table,form}` resource that UI-capable hosts (Claude Code, Cowork) fetch and render in a sandboxed iframe (`text/html;profile=mcp-app`). All three are display-only (`interactive: false`, read-only) — documented in both the gp-assistant and dataroom skills/agents.
-- Render-tool availability is **per-environment and runtime-discovered, NOT coupled to a plugin version.** A server build that hasn't shipped the render feature advertises neither the `io.modelcontextprotocol/ui` capability, the `mcp:render` scope, nor the render tools — so the same published plugin is correct against local/staging/production simultaneously, exposing render only where the server supports it (envs roll out at different times). The docs are deliberately written **capability-first** (the skills/agents tell the assistant to rely on the live `tools/list` and degrade to markdown when a render tool is absent) rather than asserting the tools always exist. When editing render docs, keep this framing: never make the plugin hard-depend on a render tool, and don't fork the plugin per environment.
+- UI render tools (`render_chart`, `render_table`, `render_ui`) are cross-domain, UNPREFIXED, and gated by
+  `mcp:render`. They are display-only MCP Apps tools returning structured content and a text fallback, with
+  `ui://anduin/{chart,table,form}` resources. A successful tool call alone does not prove an iframe displayed.
+- Rendering is capability-based, not coupled to a plugin version. Use the host-provided catalog, which may be
+  live-filtered or a published snapshot, plus actual UI support. Missing tools can reflect deployment, scopes, or
+  host packaging; do not diagnose the cause from absence alone. Read tools return data, explicit `show_*` tools
+  may produce domain widgets, and generic render tools grant no domain-data access. Keep complete Markdown
+  fallback when widgets cannot be shown, and a short takeaway when they can. Maintain this behavior in the skills.
 - Cowork only supports public URLs (not local dev).
 - `.claude/*.local.md` files are gitignored (per-user local config).
