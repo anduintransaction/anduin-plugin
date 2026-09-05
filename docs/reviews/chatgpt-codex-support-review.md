@@ -1,10 +1,78 @@
 # Review: ChatGPT and Codex Support Plan
 
+## 2026-09-05 full-plan re-review and disposition
+
+**Verdict:** Proceed with the focused Phase 1 PR and canonical skill work; do not claim deployed compatibility or
+public-launch readiness. The plan and contract now distinguish code, deployment, per-host validation and public
+approval (G0–G5). All findings below are addressed in the **plan**; external gates are deliberately still open.
+The dated historical reviews below are retained for provenance and are not current readiness statements.
+
+| Finding | Severity / confidence | Revision and remaining evidence |
+|---|---|---|
+| Completion labels contradicted uncommitted fixes and missing deployment/host evidence | P1 / high | G0–G5 records distinct states, owners and exact revision evidence. Phase 1 code verification/publication is not Phase 0 spike completion. |
+| Full 83-tool publication conflicted with Restricted Data exclusions | P1 / high | G3 approves a distribution-specific inventory before final scan. Generic search, OCR, download and render paths need pre-boundary controls; discovery filtering and prompts are insufficient. Additional controls are separately scoped work. |
+| Private fallback silently changed the universal-public goal | P1 / high | A private pilot requires explicit approval and does not complete the public goal. Security/privacy obligations remain. |
+| Keeping Claude `.mcp.json` beside `.app.json` could invalidate web availability | P1 / high | Spike 3 tests actual import classification and file discovery. Workspace docs mark MCP-declaring imports desktop-only even for HTTPS. A reproducible OpenAI artifact may need to exclude the Claude file; direct MCP is not a universal fallback. |
+| App-ID and required-connection contracts were underspecified | P1 / high | Record real URL/creator and underlying app IDs; the two official documentation paths differ. Validate the accepted mapping per path, `required: true`, admin access, and skill dependency identity; do not invent or blindly normalize IDs. |
+| Direct Codex login was being conflated with registered-app package support | P1 / high | Separate each path and use isolated profiles without ambient Anduin connections. App/CLI/IDE can share credentials. Cloud remains an explicit unproven gate rather than an assumed callback/support claim. |
+| Rollout promised all legacy tokens remained valid despite stricter audience checks | P1 / high | Preserve scope expansion but inventory base/custom-host audiences, test refreshes, and document necessary reconnect. Pausing OpenAI must not roll back the security check. |
+| Phase 0 and Phase 1 dependencies were circular; canonical skills unnecessarily blocked | P2 / high | Design decisions precede code; live spikes follow the necessary default-off candidate slice. PR 2a content can proceed now; PR 2b connection wiring waits for observations. |
+| Local tests overstated edge trust, honest errors and concurrency proof | P2 / high | Pin HTTPS independently of caller scheme headers; test failures below operations and audience-before-guard ordering. Keep real edge reachability and parallel deployed Hydra consent/refresh as separate evidence. Metadata lookup failures deliberately use a uniform clean failed result for privacy. |
+| Empty DCR allowlist criterion contradicted the loopback exception | P2 / high | Require rejection of all remote callbacks while preserving explicit local callback policy. |
+| UI-origin decision was mistaken for live UI readiness | P2 / high | Configure the dedicated origin before final scan; test resource fetch/CSP/navigation. Non-production stays inert-link unless an exact test-only origin is approved; never link staging records into production. |
+| Compatibility retirement relied only on the rollback window | P2 / high | Keep active contracts additive; retirement needs a supported migration, not elapsed time. Account for compatible HTML caching and changed content-hash URIs requiring rescan. |
+| Timeouts, ambiguous writes, monitoring and review-account policy lacked acceptance steps | P2 / high | Record per-host deadlines/cancellation, no blind write retries, baseline/stop thresholds and responsible operators. Require an approved review-only MFA exception rather than a global relaxation. |
+
+The OpenAI documentation skill exposed the import/identifier differences and update semantics; the source review
+workflow separated local code evidence from deployment assertions. References:
+[package builder](https://developers.openai.com/plugins/build/plugins),
+[workspace import and app references](https://learn.chatgpt.com/docs/enterprise/plugin-management),
+[Codex MCP](https://learn.chatgpt.com/docs/extend/mcp),
+[review lifecycle](https://developers.openai.com/plugins/deploy/app-review),
+[data policy](https://developers.openai.com/plugins/app-guidelines).
+
+### Latest implementation findings
+
+1. **P1 scheme-header spoofing — CLOSED (code and local tests).** Public edge requests derive HTTPS explicitly, ignoring
+   `cf-visitor`, `Forwarded`, and client protocol hints. Endpoint and gateway regressions pin both producer and consumer.
+2. **P1 swallowed Data Room failures — CLOSED (code and local tests).** Analytics/timeline/summary, search and metadata operation
+   failures stay failed. Real-operation tests distinguish failures from empty success; shared metadata tools return
+   privacy-preserving clean failures and retain interruption.
+3. **P2 audience validation after access guard — CLOSED (code and local tests).** Request audience is checked before product
+   entitlement access; real-Hydra HTTP regression verifies a wrong audience never invokes a failing guard.
+4. **P3 empty fund-report schema coverage — CLOSED (tests).** The empty `show_fund_report` fixture is explicitly
+   validated against the advertised table schema.
+
+Rebased [PR #55982](https://github.com/anduintransaction/stargazer/pull/55982) passes 669 Scala tests and two gateway
+tests; the plan's G1 block records the exact revision, lint evidence and remaining CI/review requirements. Nothing here authorizes merge,
+deployment, registration, review-account policy changes or public publication without the corresponding gate.
+
+## Historical review: 2026-09-03
+
 **Reviewed document:** `docs/plans/chatgpt-codex-support.md` (Status: Proposed, 2026-09-03)
 **Review date:** 2026-09-03
 **Method:** Every server-side claim was checked against the `stargazer` checkout (`upstream/master` lineage) and the
 `mcp-ui-scala` SDK. Every OpenAI claim was checked against the current pages under
 `https://developers.openai.com/plugins/`.
+
+## 2026-09-04 P1 follow-up
+
+The later Phase 0/1 implementation review produced three P1 findings. This documentation change addresses their
+planning and release-contract impact without modifying the separate `stargazer` implementation:
+
+1. **OpenAI data-policy/publication gate:** the plan and compatibility contract now require a tool-by-tool Restricted
+   Data review, server-enforced exclusions or pre-boundary redaction for sensitive document and OCR paths, regulated-data
+   necessity/consent/disclosure, and an explicit distribution verdict. Public submission remains blocked until the
+   gate passes.
+2. **Phase 1 readiness overstatement:** Phase 1 is now recorded at commit `c05643a1368` as **changes required**, not
+   done or uncommitted. The fail-open empty DCR allowlist, path-only MCP audience validation, and non-destructive
+   classification of the two tag-replacement tools are explicit merge/deployment blockers with exit criteria.
+3. **Missing skill MCP dependencies:** the target package, Phase 2/3 work, validator, PR checklist, and clean-install
+   tests now require `agents/openai.yaml` beside each skill, with an explicit Anduin MCP dependency reconciled to the
+   app connection.
+
+This follow-up does not close the server blockers themselves. They must be fixed and re-reviewed in `stargazer`
+before Phase 1 can merge or deploy.
 
 ## Verdict
 
