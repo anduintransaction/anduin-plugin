@@ -23,10 +23,11 @@ The plugin connects to Anduin's MCP server (hardcoded to Production US by defaul
 
 ## Testing Changes
 
-Use the synthetic cases and regression checklist in
-`docs/evaluations/canonical-skills-phase2a.md` for content changes. Structural validation and simulated decisions
-do not replace installation, OAuth, or renderer tests in the actual hosts. Do not execute synthetic writes against
-the default production connection.
+For content changes, verify direct skill invocation, automatic agent activation, permission handling, and
+widget/text fallback in the supported hosts. Verify that adapters stop without calling domain tools if the
+canonical skill cannot load. Structural validation does not replace installation, OAuth, or renderer tests.
+Use an explicitly authorized test account for write checks; do not execute synthetic writes against the default
+production connection.
 
 For an authorized host smoke test, verify manually:
 
@@ -45,7 +46,8 @@ For an authorized host smoke test, verify manually:
 ## Plugin Architecture
 
 This is a **content-only plugin** — no runtime build step or application dependencies. Runtime files are Markdown
-or JSON; versioned synthetic evaluation fixtures live under `docs/evaluations/`.
+or JSON. Keep repository documentation customer-facing; internal plans, reviews, and test-run records belong
+outside this repository.
 
 ```
 .claude-plugin/marketplace.json       — Marketplace manifest (lists all plugins)
@@ -68,8 +70,8 @@ plugins/anduin/                       — Anduin platform plugin
   confirmation, recovery, and presentation guidance in the skill, not a second copy in the adapter.
 - Canonical skills use wire names (`dr_` for Data Room, unprefixed for fund subscription). Resolve them against the
   current host's provided Anduin catalog; do not copy Claude-specific MCP prefixes into shared behavior.
-- OpenAI connection declarations and packaging are a later gated change. Provider-neutral content alone does not
-  establish ChatGPT or Codex installation support; see `docs/plans/chatgpt-codex-support.md`.
+- Provider-neutral content alone does not establish support for additional hosts. Keep installation and
+  compatibility claims aligned with the supported platforms documented in `README.md`.
 
 ## MCP Server Configuration
 
