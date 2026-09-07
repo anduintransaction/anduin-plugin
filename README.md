@@ -1,174 +1,70 @@
 # Anduin Plugin for Claude
 
-AI-powered assistants for managing Anduin fund subscriptions and data rooms. Works with both **Claude Code** (for developers) and **Cowork** (for everyone).
+Manage Anduin fund subscriptions and data rooms from **Claude Code** or **Cowork**, using your existing Anduin account and permissions.
 
-## What You Can Do
+This package includes two shared workflow skills and Claude agents that load them automatically. ChatGPT/Codex installation packaging is not included.
 
-### GP Assistant — Fund Subscription Management
+## Capabilities
 
-For fund managers and operations teams:
+- **GP Assistant:** review LP status, forms, documents and AML/KYC results; analyze fund reports and dashboards; update form fields, order tags and custom columns; post comments and invite fund managers.
+- **Data Room:** browse and search rooms/files; create folders and rename items; manage rooms and participants; read PDFs, images and Excel files; view engagement analytics. Analytics require a joined Admin and the room's Insights plan.
+- **Presentation:** charts, tables and form-style summaries where the host supports widgets, with text/Markdown fallback otherwise. Widgets are display-only: they do not submit forms or change records.
 
-- **Review LP orders** — check subscription status, form completeness, and compliance
-- **Browse fund dashboards** — see fund reports, commitment summaries, and activity logs
-- **Manage order tags** — tag and organize orders across your fund
-- **Invite fund managers** — add team members to fund manager groups
-- **Check AML/KYC** — review compliance status for investors
-- **Assist with forms** — help fill or correct subscription form fields
-- **Read documents** — convert subscription documents and spreadsheets to readable text using OCR
-- **Visualize data** — see charts, tables, and form-style summaries as interactive widgets (in apps that support them)
+Available actions depend on the connected server, granted scopes and your product access. The assistants preview changes for confirmation and report partial or uncertain outcomes. They do not provide subscription approval/countersigning, file upload/move, or folder restoration.
 
-### Data Room Agent — Virtual Data Room Management
+## Install and connect
 
-For deal teams and anyone managing shared documents:
+### Claude Code
 
-- **Create and organize data rooms** — set up new rooms, create folder structures
-- **Manage participants** — invite, remove, or change roles (Admin, Member, Contributor, Observer)
-- **Search and browse files** — find documents and navigate folder structures
-- **View analytics** — see who's accessing what, activity trends, and engagement metrics
-- **Read documents** — convert PDFs, images, and spreadsheets to readable text using OCR
-- **Visualize data** — see engagement charts, file/participant tables, and summaries as interactive widgets (in apps that support them)
+Run inside Claude Code:
 
-## Getting Started
-
-### Step 1: Install the plugin
-
-**Cowork (desktop app):**
-
-Follow [Anthropic's guide to using plugins in Cowork](https://support.claude.com/en/articles/13837440-use-plugins-in-cowork). When adding a marketplace, use `anduintransaction/anduin-plugin`.
-
-**Claude Code (terminal):**
-```
+```text
 /plugin marketplace add anduintransaction/anduin-plugin
 /plugin install anduin@anduin-marketplace
 ```
 
-### Step 2: Sign in
+Follow the activation prompt, then use `/mcp` to select the Anduin connection and sign in through your browser. See Anthropic's [plugin installation guide](https://code.claude.com/docs/en/discover-plugins) and [MCP authentication guide](https://code.claude.com/docs/en/mcp#authenticate-with-remote-mcp-servers).
 
-After installing, restart the app. On first use, a browser window opens for you to sign in with your Anduin credentials. After that, authentication is handled automatically — no tokens or passwords to manage.
+### Cowork
 
-The plugin connects to **Anduin Production (US)** by default. No additional setup is needed.
+Open **Customize → Plugins**, add `anduintransaction/anduin-plugin` as a marketplace, and install **anduin**. Follow the connection prompts to sign in. See Anthropic's [plugin guide](https://support.claude.com/en/articles/13837440-use-plugins-in-claude).
 
-You'll be asked to approve access scopes:
-
-| Scope | What it allows |
-|---|---|
-| `fundsub:read` | View fund subscription data (orders, forms, documents) |
-| `fundsub:write` | Make changes to subscriptions (update forms, tags, invite managers) |
-| `fundsub:admin` | Full administrative access to fund subscriptions (currently unlocks no tools beyond `fundsub:write`) |
-| `dataroom:read` | View data rooms (files, participants, analytics) |
-| `dataroom:write` | Routine data room changes (create rooms and folders, rename, invite users, restore deleted files) |
-| `dataroom:admin` | Destructive data room actions (archive rooms, delete files/folders, remove users, change roles) |
-| `mcp:render` | Show interactive charts, tables, and forms as visual widgets (display-only) |
-
-Approve whichever scopes match the work you need to do. Scopes are hierarchical within each family — admin includes write, write includes read. You only see tools relevant to your approved scopes. The visual widgets from `mcp:render` appear in apps that support them (Claude Code, Cowork); elsewhere you still get the same data as text.
+The bundled connection uses **Anduin Production (US)** at `https://mcp.anduin.app/mcp`. Sign in with the Anduin account that has access to the funds or rooms you need; do not paste passwords or tokens into chat.
 
 ## Usage
 
-Just describe what you need in plain language. The right assistant activates automatically:
+Describe your task naturally, or invoke `/anduin:gp-assistant` or `/anduin:dataroom` in Claude Code. In Cowork, select the corresponding skill from the skills menu.
 
-**Fund subscriptions:**
-- *"Show me the fund report for Venture Fund III"*
-- *"Which LPs have incomplete forms?"*
-- *"Compare the commitment amounts across all LPs"*
-- *"Tag these orders as reviewed"*
-- *"Invite john@acme.com as a fund manager"*
-- *"Check AML status for the LP orders in Close 2"*
-- *"Read the subscription agreement for Acme Capital"*
-- *"Chart the commitment totals by close"*
-- *"Show the orders as a table"*
+- “Which LPs in Venture Fund III have incomplete forms?”
+- “Summarize the fund's subscription report and chart order counts by close.”
+- “Preview adding Reviewed to these orders, keeping their existing tags.”
+- “Who has access to the Acme data room?”
+- “Read the NDA and summarize the pages you reviewed.”
+- “Prepare invitations for these participants as Observers.”
 
-**Data rooms:**
-- *"List all my data rooms"*
-- *"Create a data room for the Series B deal"*
-- *"Invite sarah@example.com as an Admin to the Acme data room"*
-- *"Organize the files into folders by document type"*
-- *"Show me the activity analytics for this data room"*
-- *"Who has access to our deal room?"*
-- *"Show me the contents of the NDA document"*
-- *"Chart the most-viewed files in this data room"*
-- *"Show the participants as a table"*
+## Permissions
 
-## Troubleshooting
+Consent shows the scopes requested by the connection, not every supported permission or one entry per tool. Approve only what your task needs.
 
-| Problem | What to do |
+| Scope | Access |
 |---|---|
-| **Anduin MCP not showing** | Reinstall the plugin and restart the app. |
-| **"Unauthorized" or login issues** | Your session may have expired. Restart the app to sign in again. |
-| **"Insufficient scopes" error** | You need broader permissions. Restart and approve additional scopes when prompted, or ask your admin for access. Destructive data room actions (archive, delete, remove users, change roles) specifically require the `dataroom:admin` scope. |
-| **Tools not showing up** | Check that the server is connected (in Claude Code: run `/mcp`). You only see tools matching your approved scopes. |
+| `fundsub:read` | Subscription data, forms, documents and reports |
+| `fundsub:write` | Form/comment/tag/custom-column changes and manager invitations |
+| `fundsub:admin` | Includes fund write/read; currently adds no tools beyond write |
+| `dataroom:read` | Room contents, participants and permitted analytics |
+| `dataroom:write` | Create/rename rooms and folders, rename items, invite users and restore eligible files |
+| `dataroom:admin` | Archive/unarchive rooms, delete items, remove users and change roles |
+| `mcp:render` | Display-only visuals; no domain-data access |
 
-Need help? Ask Claude: *"How do I connect to Anduin?"*
+Within each domain, admin includes write and read; write includes read. Rendering is separate. OAuth consent does **not** grant fund/room roles or upgrade your plan.
 
-## Updating
+## Troubleshooting and updates
 
-Run inside Claude Code or Cowork:
-```
-/plugin marketplace update
-```
-
-## For Developers
-
-<details>
-<summary>Advanced configuration, plugin structure, and local development</summary>
-
-### Switching environments
-
-The plugin defaults to Production (US). To connect to a different environment, remove and re-add the MCP server in Claude Code:
-
-```bash
-claude mcp remove anduin
-claude mcp add --transport http anduin <environment-url>
-```
-
-Available environments:
-
-| Environment | URL |
-|---|---|
-| Production (US) *(default)* | `https://mcp.anduin.app/mcp` |
-| Production (EU) | `https://mcp.eu.anduin.app/mcp` |
-| Staging | `https://mcp-staging.anduin.dev/mcp` |
-| Minas Tirith (daily bounce) | `https://minas-tirith.anduin.dev/mcp` |
-| Local Development | `http://gondor-local.io:8080/mcp` |
-
-To revert to Production US, just reinstall the plugin — it will restore the default.
-
-### Local installation
-
-```
-/plugin add ./plugins/anduin
-```
-
-### Plugin structure
-
-```
-anduin-plugin/
-├── .claude-plugin/
-│   └── marketplace.json         # Marketplace manifest
-├── plugins/anduin/
-│   ├── .claude-plugin/
-│   │   └── plugin.json          # Plugin manifest
-│   ├── .mcp.json                # MCP server config (Production US)
-│   ├── agents/
-│   │   ├── dataroom-agent.md              # Data Room autonomous agent
-│   │   └── gp-assistant.md                # GP Assistant autonomous agent
-│   └── skills/
-│       ├── dataroom/
-│       │   └── SKILL.md                   # Data Room domain knowledge
-│       └── gp-assistant/
-│           └── SKILL.md                   # GP Assistant domain knowledge
-├── LICENSE
-└── README.md
-```
-
-### Compatibility
-
-| Platform | Supported | Notes |
-|---|---|---|
-| Claude Code (terminal) | Yes | All server URLs work, including local dev |
-| Cowork (desktop app) | Yes | Connects to Production automatically |
-
-</details>
+- **Missing connection or tools:** check that the plugin is enabled and connected (`/plugin` and `/mcp` in Claude Code). Availability can also depend on scopes and the server's tool catalog.
+- **Expired login or insufficient scopes:** reconnect through the host and approve the required access. For product-role or plan denials, contact your fund/room administrator instead.
+- **No widget appears:** ask for the result as text or a Markdown table; a successful rendering call does not guarantee the host displayed it.
+- **Update the plugin:** use Claude Code's [marketplace update controls](https://code.claude.com/docs/en/discover-plugins#configure-auto-updates), or manage the installed plugin in Cowork's Plugins settings. Follow any reload/restart prompt.
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
+[MIT](LICENSE).
