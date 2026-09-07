@@ -44,9 +44,14 @@ empty fund-report output. Local regression evidence belongs to G1; deployed edge
 behavior still belong to G2/G4. `FileFolderInfoTools` deliberately returns one clean failed result for missing,
 inaccessible and failed metadata reads, preserving privacy without pretending the operation succeeded.
 
-Current PR branch: `codex/openai-phase-1`, head `93ba809fbe2e9a6133f39489fb0b119d1d491166`, rebased onto upstream
+Published PR branch (refreshed 2026-09-07): `codex/openai-phase-1`, head `876344b4bcdc3f03b84fc357bf32eaa062d8b103`, rebased onto upstream
 `323f1c0dcb5d329b59d0b0ed8bdd0c7837dcc8e9`. The historical `chatgpt-codex/phase-1` checkout is kept separately to
 preserve unrelated dashboard edits. See the plan's G1 evidence block for final checks and PR status.
+
+CI was green on parent `e75aac0f`; fresh exact-head CI and review approval are still required. The follow-up closes
+empty/non-string and duplicate table-column ID/type filter bypasses and document validation/error-contract gaps.
+The fixes and regressions are now published, excluding the unrelated dashboard commit. The plan distinguishes the
+1,410 passing tests on the original checkout from the new PR's pending CI; neither proves deployed-host readiness.
 
 Official docs currently differ on identifier shape: the builder accepts a `plugin_asdk_app...` URL/creator ID,
 whereas workspace import documents the underlying `asdk_app_...` app ID and rejects plugin IDs. Record actual
@@ -338,7 +343,7 @@ approved; never point staging records at production. Final navigation tests use 
 | Deep-link origin allowlist documented | **Done** — one exact origin, no wildcard dependency (Section 4) |
 | Resubmission rules documented | **Done** (Section 5) |
 | Phase 0A SDK contracts (output schemas, `redirect_domains`, UI domain alias) | **Done** — PR #30 merged, released as `v0.5.0` |
-| Phase 1 server changes (1.1, 1.3, 1.4, 1.5, D4 closure; 1.2 as a config-gated candidate) | **PR #55982 open; local checks passed, CI/review pending** — `codex/openai-phase-1`, SDK `0.5.0`; no deployed-host claim. See the plan's G1 evidence. |
+| Phase 1 server changes (1.1, 1.3, 1.4, 1.5, D4 closure; 1.2 as a config-gated candidate) | **PR #55982 open; review fixes published, fresh CI/review pending** — `codex/openai-phase-1`, SDK `0.5.0`; obtain exact-head CI/review before G1 closes. No deployed-host claim. See the plan's G1 evidence. |
 
 Dependencies to start now, in parallel with G1/G2 and canonical skill work (PR 0 is already released): OpenAI
 organization and business verification, legal/support URLs, the non-production spike account, the production D8

@@ -73,6 +73,34 @@ text-equality test between the intentionally different adapter and skill formats
 [skill guidance](https://developers.openai.com/plugins/build/skills) informs the shared workflow/capability boundary;
 required connection declarations remain Phase 2.4, gated on real connection evidence.
 
+## Review follow-up (2026-09-06)
+
+The 15-case independent evaluation and hashes above are historical evidence for the pre-review revision, not a
+fresh pass of the revised skills. The review found that the presentation twins do not return the same grounding
+text as their data twins: the MCP adapter supplies a short stub/IDs, while the widget spec can omit report fields.
+Both skills now require a same-argument data-tool read when the available result is insufficient for the answer.
+They permit reusing sufficient model-visible structured data and prohibit summing overlapping sub-fund rows into
+a deduplicated fund total. This is consistent with OpenAI exposing both `content` and `structuredContent` to the
+model/component, but `_meta` only to the component ([official reference](https://developers.openai.com/plugins/reference)).
+
+Three raw regression cases were added (18 total). Focused author walkthroughs produced these decisions; these are
+not independent model evaluation or live-host evidence:
+
+| Case | Decision checked against the revised skill and supplied results |
+|---|---|
+| `gp-show-report-missing-data` | Propose `get_fund_report({fund_id: "opaque-fund-A"})`; stop for the missing result. Do not report 9 unique orders from overlapping 5/4 rows. |
+| `dr-show-stub-missing-data` | Propose `dr_list_datarooms({})`; stop for room details and coverage. An ID/name handle alone cannot establish either. |
+| `gp-show-sufficient-structured-data` | Answer Sub-fund A, 5 versus 4 (one more), using the supplied rows. No additional read or fund-wide total claim. |
+
+Both revised skills pass `quick_validate.py` with temporary PyYAML 6.0.3; the 18-case JSON parses successfully.
+Revised skill SHA-256 values:
+
+- GP: `e122ac5232f9550380a8714cb68210ed8aafa0f4e1334f708fb05f585bb559c6`
+- Data Room: `3b81eaf854142f00005958657e005f0c7aae5c0798e179963dab5cd0a8155443`
+
+Re-run the full independent evaluation on these revisions before merge. Claude adapters, manifests and MCP
+configuration remain unchanged. No install, OAuth, registration, or real-account acceptance test was run.
+
 ## Required before merge/release
 
 - In Claude Code and Cowork, test both direct skill invocation and automatic agent activation from a clean plugin
