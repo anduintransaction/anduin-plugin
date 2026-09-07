@@ -4,6 +4,27 @@
   "instructions": "Each case is independent. All names, identifiers, records, permissions, and results are synthetic fixtures, not real account data or exact wire schemas. Use the relevant canonical skill and only the listed mock tool capabilities. Return proposed calls with arguments, stopping points, and the user-facing response. Do not execute network, MCP, shell writes, or real account actions. If a required result is absent, say what to fetch or ask next; do not invent it.",
   "cases": [
     {
+      "id": "gp-show-report-missing-data",
+      "request": "Give me Demo Growth's full subscription report, including the fund-wide number of unique orders.",
+      "catalog": ["show_fund_report", "get_fund_report"],
+      "context": "Earlier authorized discovery returned opaque-fund-A. show_fund_report was called with fund_id opaque-fund-A and returned isError=false, a Rendered UI component text stub and a structured sub-fund table with two rows: Sub-fund A has 5 orders, Sub-fund B has 4. The rows can overlap. No fund-wide unique total, full status breakdown, or data-tool result has been provided. The host cannot display the widget.",
+      "host_ui": "text-only"
+    },
+    {
+      "id": "dr-show-stub-missing-data",
+      "request": "List my data rooms with their details in this text chat.",
+      "catalog": ["show_datarooms", "dr_list_datarooms"],
+      "context": "show_datarooms was called with empty arguments and returned isError=false. Only a Rendered UI component stub and opaque-room-A / Demo Deal Room chaining handle are model-visible. No structured rows, details, pagination information, or dr_list_datarooms result is available. No subsequent read has happened.",
+      "host_ui": "text-only"
+    },
+    {
+      "id": "gp-show-sufficient-structured-data",
+      "request": "Which of those two sub-funds has more orders?",
+      "catalog": ["show_fund_report", "get_fund_report"],
+      "context": "A successful show_fund_report call for the discovered opaque-fund-A returned model-visible structured rows: Sub-fund A has 5 orders and Sub-fund B has 4. These counts answer the requested comparison; no fund-wide total is supplied or requested. The host cannot display the widget.",
+      "host_ui": "text-only"
+    },
+    {
       "id": "gp-report",
       "request": "List my funds and summarize the subscription report for Demo Growth.",
       "catalog": ["list_funds", "get_fund_report"],

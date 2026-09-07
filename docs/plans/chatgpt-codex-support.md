@@ -31,7 +31,7 @@ Unit tests, a real local Hydra, and a published SDK do not prove a live ChatGPT 
 | Gate | Current state | Exit evidence / accountable role |
 |---|---|---|
 | G0 — SDK | Delivered: PR #30, `v0.5.0` | Released artifacts consumed by Stargazer; SDK maintainer |
-| G1 — Phase 1 code | PR #55982 open; local verification passed, CI/review pending | Exact head, green required CI, reviewer approval; server maintainer |
+| G1 — Phase 1 code | PR #55982 open; review fixes published, fresh CI/review pending | Green exact-head CI, reviewer approval; server maintainer |
 | G2 — Deployed compatibility | Not proven | Selected public non-production revision/config, edge-header test, real OAuth success/error redirects, exchange/refresh/reconnect, Inspector and Claude regression; deployment owner + host tester |
 | G3 — Distribution and data | Open; blocks public launch | Per-tool data inventory, approved distribution catalog and tested server-side controls, legal/security sign-off; product + security/privacy owners |
 | G4 — Package and hosts | Not implemented/proven | Real app mapping, clean-install connection/skill tests per named surface, stored scan comparison, dedicated UI origin; plugin maintainer + host tester |
@@ -40,7 +40,9 @@ Unit tests, a real local Hydra, and a published SDK do not prove a live ChatGPT 
 Next: close G1, then deploy the default-off issuer candidate to the selected non-production environment and execute
 G2. Phase 2.1–2.3 content and thin Claude adapters are implemented on `codex/canonical-anduin-skills`; complete
 review and clean-install Claude Code/Cowork regression before merging that change. The
-[15-case offline evaluation](../evaluations/canonical-skills-phase2a.md) is content evidence, not host acceptance.
+[offline evaluation](../evaluations/canonical-skills-phase2a.md) is content evidence, not host acceptance. Its original
+15-case independent pass predates the fallback correction; three new author-walkthrough cases bring the fixture to
+18, with a full independent re-evaluation still required.
 Phase 2.4 and Phase 3 wiring still need the real connection and host observations. Begin G3 in parallel: policy
 controls are a separately scoped implementation track if needed, not functionality already supplied by Phase 1.
 
@@ -53,6 +55,32 @@ version, test identity class (no credentials), result and evidence link. Assign 
 role labels here are not assignments. Historical probes below retain their original dates.
 
 ### G1 revision evidence (2026-09-05)
+
+**2026-09-07 publication:** Review fixes are pushed to PR #55982 as
+`876344b4bcdc3f03b84fc357bf32eaa062d8b103`, directly on the previously green `e75aac0f` head. The focused
+13-file follow-up excludes the unrelated dashboard commit; the six CI-repair files were already on the PR.
+The original checkout retains local commit `e0400298cf9` with the fixes and CI repair. All 19 reviewed files match
+between the published commit and that tested checkout. The six directly changed Scala source/test modules also
+passed full `checkStyleCached` (17 configured rules). The 1,410-test result below belongs to the original checkout,
+not a new exact-head PR run; fresh CI and reviewer approval are still required. No deployment or host test occurred.
+
+Historical verification and publication states follow:
+
+**2026-09-06 refresh:** PR #55982 remains open at `e75aac0f52dc40cad0f0a1e87ae9fd1e0242b074`, base
+`323f1c0dcb5d329b59d0b0ed8bdd0c7837dcc8e9`. Build, style, unit and integration CI passed on that published head
+([CI run](https://github.com/anduintransaction/stargazer/actions/runs/33946742525)); reviewer approval is still required.
+The local `chatgpt-codex/phase-1` checkout at `865af608266b792240e9efbd11a439b07eb8adf6` now contains uncommitted
+follow-up fixes for widget empty-ID filtering and document error semantics, plus the PR's final CI repair. Its unrelated
+dashboard commit is preserved. These follow-up edits are not on the PR and are not covered by its green CI.
+Publish only the focused changes onto the PR branch; do not replace its rebased history with the historical checkout.
+Local verification of this follow-up: **1,410 Scala tests passed** — complete MCP suite (467), complete Data Room
+suite (861), and shared document/spreadsheet tool suites (82). All nine affected Scala source/test modules passed
+`checkStyleDirty` with the 17 configured rules. Seven in-memory checks against the released SDK renderer confirmed
+empty-ID lookup and inert-cell behavior; this is not a real-host test. The Scala filter tests also cover duplicate
+column IDs/types. Known cache/page/sheet-range failures now have typed safe messages, while unexpected reader
+failures/defects reach the opaque MCP correlation error. Validation/scope failures are `isError`, not successful text.
+The CI repair includes removing the unused `HttpContextUtils.getHttpScheme` helper/codec/imports; Git retains the
+original. G1 stays open until these changes are published and pass exact-head PR CI/review. Earlier evidence follows unchanged:
 
 - [Stargazer PR #55982](https://github.com/anduintransaction/stargazer/pull/55982), branch `codex/openai-phase-1`,
   current head `f1e86a9331b110905a725dadefc682804b9f2929`, base `323f1c0dcb5d329b59d0b0ed8bdd0c7837dcc8e9`.
@@ -553,6 +581,8 @@ proves connection resolution; writing a YAML file alone does not close it.
 
 **Content evidence (2026-09-05):** 2.1–2.3 implemented with valid skill frontmatter, preserved Claude model/tool
 configuration, unchanged Claude manifests/MCP configuration, and 15 passing independent offline decision cases.
+The 2026-09-06 fallback correction changes the evaluated skill hashes and adds three cases; the original pass is
+historical, not a fresh pass for these revisions. Full independent re-evaluation remains required.
 See the [evaluation and outstanding host checks](../evaluations/canonical-skills-phase2a.md). Actual Claude
 activation/loading is not yet verified; OpenAI dependencies and the full Phase 2 exit criteria remain open.
 
