@@ -8,8 +8,17 @@
     {
       "name": "anduin",
       "source": "./plugins/anduin",
-      "description": "Data room management and fund subscription review for the Anduin platform",
-      "version": "0.9.2"
+      "description": "Data room management and fund subscription review for the Anduin platform — Production (US) accounts"
+    },
+    {
+      "name": "anduin-eu",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/anduintransaction/anduin-plugin.git",
+        "path": "plugins/anduin",
+        "ref": "v0.10.0-eu"
+      },
+      "description": "Data room management and fund subscription review for the Anduin platform — Production (EU) accounts"
     }
   ]
 }
