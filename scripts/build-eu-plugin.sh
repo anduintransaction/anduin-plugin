@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Turns a copy of plugins/anduin (US) into the EU build: only the MCP URL and version differ.
 # Usage: scripts/build-eu-plugin.sh <target-dir>   e.g. /tmp/anduin-eu, or plugins/anduin for in place (CI)
-#        scripts/build-eu-plugin.sh --check        verify marketplace sources, README and CHANGELOG
+#        scripts/build-eu-plugin.sh --check        verify marketplace sources, guide, README and CHANGELOG
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -14,7 +14,7 @@ fi
 
 if [[ "$1" == "--check" ]]; then
   python3 - "$root" <<'PY'
-import json, re, sys
+import html, json, re, sys
 root = sys.argv[1]
 want = json.load(open(f"{root}/plugins/anduin/.claude-plugin/plugin.json"))["version"]
 if not re.fullmatch(r"\d+\.\d+\.\d+", want):
@@ -35,10 +35,18 @@ if json.load(open(f"{root}/plugins/anduin/.claude-plugin/plugin.json"))["name"] 
     sys.exit("plugin.json name must stay `anduin` (agents allow mcp__plugin_anduin_anduin__*)")
 if list(json.load(open(f"{root}/plugins/anduin/.mcp.json"))["mcpServers"]) != ["anduin"]:
     sys.exit(".mcp.json must define exactly one server named `anduin`")
-# README and CHANGELOG must name this release.
+# The guide's two copy-paste blocks, README and CHANGELOG must all name this release.
+guide = open(f"{root}/docs/Anduin_MCP_Enablement_Guide_Claude.html").read()
+pres = [html.unescape(re.sub(r"<[^>]+>", "", b)) for b in re.findall(r"<pre>(.*?)</pre>", guide, re.S)]
+got_src = [json.loads(b)["plugins"][0]["source"] for b in pres if b.lstrip().startswith("{")]
+if got_src != [dict(eu, ref=f"v{want}"), eu]:
+    sys.exit(f"guide JSON blocks must use refs v{want} and v{want}-eu, got {[s.get('ref') for s in got_src]}")
 readme = open(f"{root}/README.md").read()
 if f'"ref": "v{want}"' not in readme or f'"ref": "v{want}-eu"' not in readme:
     sys.exit(f"README.md organization example must use v{want} and v{want}-eu")
+stale = {t for doc in (guide, readme) for t in re.findall(r"v\d+\.\d+\.\d+(?:-eu)?", doc)} - {f"v{want}", f"v{want}-eu"}
+if stale:
+    sys.exit(f"guide/README still mention other release tags: {sorted(stale)}")
 if not re.search(rf"^## {re.escape(want)}\b", open(f"{root}/CHANGELOG.md").read(), re.M):
     sys.exit(f"CHANGELOG.md needs a '## {want}' section")
 print(f"release metadata consistent for {want} / {want}-eu")

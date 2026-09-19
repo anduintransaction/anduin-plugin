@@ -5,7 +5,7 @@ Versions follow [semantic versioning](https://semver.org). Every release `X.Y.Z`
 ## 0.10.0
 
 - Production EU support: each release is also published as a `vX.Y.Z-eu` tag that connects to `https://mcp.eu.anduin.app/mcp`, and the marketplace gains an `anduin-eu` entry. Install one region only.
-- Organization admins choose the region with the `ref` of their marketplace entry.
+- Organization admins choose the region with the `ref` of their marketplace entry; see the admin guide in `docs/`.
 - GitHub Releases list the paste-ready `ref` lines, the matching commits, and one ZIP per region.
 - Local testing uses `claude --plugin-dir`.
 
