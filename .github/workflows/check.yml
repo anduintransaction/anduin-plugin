@@ -1,0 +1,22 @@
+name: Check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - run: scripts/build-eu-plugin.sh --check
+      - name: EU build succeeds
+        run: scripts/build-eu-plugin.sh "$RUNNER_TEMP/anduin-eu" && cat "$RUNNER_TEMP/anduin-eu/.mcp.json"

@@ -1,2 +1,5 @@
 .claude/
 .DS_Store
+
+# Rendered customer guide (build with scripts/render-guide.sh)
+docs/*.pdf

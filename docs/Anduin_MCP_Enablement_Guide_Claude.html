@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Making Anduin available in your Claude organization</title>
+<style>
+  @page { size: Letter; margin: 0.9in 0.85in; }
+  :root { --ink:#111827; --muted:#4b5563; --accent:#2563eb; --line:#e5e7eb; --panel:#f5f6f8; --code:#0b1220; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Inter", "Segoe UI", Helvetica, Arial, sans-serif; color: var(--ink); font-size: 11.5pt; line-height: 1.55; margin: 0; }
+  .eyebrow { color: var(--accent); font-weight: 700; font-size: 8.5pt; letter-spacing: .12em; text-transform: uppercase; margin: 0 0 10px; }
+  h1 { font-size: 24pt; line-height: 1.15; margin: 0 0 12px; letter-spacing: -.01em; }
+  h2 { font-size: 15pt; margin: 26px 0 6px; padding-bottom: 6px; border-bottom: 1px solid var(--line); break-after: avoid; }
+  p { margin: 0 0 11px; }
+  .lead { color: var(--muted); }
+  a { color: var(--accent); text-decoration: none; }
+  code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 9.5pt; background: #eef0f3; padding: 1px 5px; border-radius: 4px; }
+  pre { background: var(--code); color: #e6edf3; border-radius: 8px; padding: 14px 16px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 9pt; line-height: 1.5; overflow: hidden; white-space: pre-wrap; margin: 10px 0 12px; break-inside: avoid; }
+  pre .hl { background: #1f3a6b; border-radius: 3px; padding: 0 3px; }
+  .callout { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; margin: 14px 0; }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout > p:first-child { break-after: avoid; }
+  .callout li, ul > li { break-inside: avoid; }
+  ol { padding-left: 22px; } ol > li { margin-bottom: 12px; }
+  ul { padding-left: 20px; margin: 4px 0 10px; } ul > li { margin-bottom: 5px; }
+  table { border-collapse: collapse; margin: 6px 0 12px; font-size: 10.5pt; }
+  th, td { border: 1px solid var(--line); padding: 6px 12px; text-align: left; vertical-align: top; }
+  th { background: var(--panel); }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 22px 0 16px; }
+  .small { font-size: 10pt; color: var(--muted); }
+  .region { font-weight: 700; margin: 12px 0 4px; }
+  .block { break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<p class="eyebrow">Anduin for Claude · Organization setup</p>
+<h1>Making Anduin available in your Claude organization</h1>
+
+<p class="lead">A short guide for your Claude organization admin. It walks through adding the Anduin plugin to your organization so your whole team can connect Claude to Anduin — no coding required beyond copying one file into place.</p>
+
+<p><strong>How this works, in plain terms.</strong> Claude lets an organization offer an approved set of plugins to its members through its own private "plugin marketplace." The setup is a one-time job: create a small private code repository your IT team controls, add a single entry that points to Anduin's plugin, and connect it inside Claude. You never copy or host Anduin's software — the entry simply points to it.</p>
+
+<p>This is Claude's own <strong>standard, recommended way</strong> to distribute plugins — it follows <a href="https://code.claude.com/docs/en/plugin-marketplaces#distribute-through-organization-settings">Anthropic's official guidance</a>, not anything Anduin-specific. So the same marketplace you set up here will manage <strong>every plugin you roll out in future</strong>, not just Anduin.</p>
+
+<div class="callout"><p><strong>Good to know:</strong> a Claude organization marketplace only accepts <em>your own</em> private repository — you can't point it straight at Anduin's public one. That's expected; the entry inside your repository does the pointing for you.</p></div>
+
+<h2>Before you begin</h2>
+<ul>
+  <li>You're an <strong>Owner</strong> (or Primary Owner) of your Claude <strong>Team or Enterprise</strong> organization.</li>
+  <li><strong>Cowork</strong> and <strong>Skills</strong> are turned on for your organization.</li>
+  <li>Someone on your side can create a private <strong>GitHub</strong> repository and install the <strong>Claude GitHub App</strong> on it. If that isn't you, pass this guide to whoever manages your GitHub — the steps are quick.</li>
+  <li><strong>You know your Anduin region — US or EU.</strong> Your organization's Anduin account lives in one of the two, and you'll pick the matching entry in Step 2. If you're not sure, ask your Anduin contact before you start.</li>
+</ul>
+
+<h2>Set it up</h2>
+<ol>
+  <li><strong>Step 1 — Create a private repository.</strong> In your company's GitHub, create a new <strong>private</strong> repository — for example, <code>your-company/claude-plugins</code>. You'll reuse this same repository for any Claude plugins you approve later, so give it a general name.</li>
+
+  <li><strong>Step 2 — Add one file listing the Anduin plugin for your region.</strong> In that repository, create a file at this exact location: <code>.claude-plugin/marketplace.json</code>. Copy <strong>one</strong> of the two blocks below — the one for your Anduin region — and change only the names in quotes to your organization's (the <code>your-company…</code> and <code>Your Company</code> parts). Leave the <code>plugins</code> section exactly as written — that's what points Claude to Anduin.
+
+  <div class="block"><p class="region">If your Anduin region is US, copy this:</p>
+<pre>{
+  "name": "your-company-plugins",
+  "description": "Claude plugins approved for use at Your Company",
+  "owner": { "name": "Your Company IT" },
+  "plugins": [
+    {
+      "name": "anduin",
+      "description": "Anduin data rooms and fund subscriptions (US)",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/anduintransaction/anduin-plugin.git",
+        "path": "plugins/anduin",
+        <span class="hl">"ref": "v0.10.0"</span>
+      }
+    }
+  ]
+}</pre></div>
+
+  <div class="block"><p class="region">If your Anduin region is EU, copy this:</p>
+<pre>{
+  "name": "your-company-plugins",
+  "description": "Claude plugins approved for use at Your Company",
+  "owner": { "name": "Your Company IT" },
+  "plugins": [
+    {
+      "name": "anduin",
+      "description": "Anduin data rooms and fund subscriptions (EU)",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/anduintransaction/anduin-plugin.git",
+        "path": "plugins/anduin",
+        <span class="hl">"ref": "v0.10.0-eu"</span>
+      }
+    }
+  ]
+}</pre></div>
+
+  <p>The two blocks differ only in the highlighted <code>ref</code> line — the Anduin release to install; the EU release ends in <code>-eu</code> — and the description. Use one Anduin entry only — the two regional builds can't be installed side by side. Keep names lowercase-with-hyphens.</p>
+
+  </li>
+
+  <li><strong>Step 3 — Connect the repository to Claude.</strong> In claude.ai, open <strong>Organization settings → Plugins</strong>, click <strong>Add plugins → GitHub</strong>, and enter your repository as <code>owner/repo</code> (for example, <code>your-company/claude-plugins</code>). If it doesn't appear, install the <strong>Claude GitHub App</strong> on that repository and try again. Claude runs a first sync automatically — allow up to 30 minutes.</li>
+
+  <li><strong>Step 4 — Try it yourself first.</strong> Set the plugin to <strong>Available for install</strong> for now (nobody receives it automatically), install it yourself, and ask Claude: <em>"List my Anduin data rooms"</em> (or <em>"List my funds"</em>). Claude will ask you to sign in to Anduin — use your normal Anduin account. If you see your own rooms or funds, the setup is correct. If not, see "If you get stuck" below before going further.</li>
+
+  <li><strong>Step 5 — Choose who gets it.</strong> Set how the Anduin plugin is offered to your members: <strong>Installed by default</strong>, <strong>Available for install</strong>, <strong>Required</strong>, or <strong>Not available</strong> (which hides it). With any of the first three, your team finds Anduin in the <strong>Browse plugins</strong> list inside Claude — in chat, on Claude Desktop, or in Cowork — with no GitHub access needed.</li>
+</ol>
+
+<p><strong>That's it</strong> — the Anduin plugin is now available across your Claude organization.</p>
+
+<p><strong>What your team will see.</strong> A single connection named <strong>Anduin</strong>. The first time someone uses it, Claude asks them to sign in with their usual Anduin account; from then on, each person only ever sees what their own Anduin account already allows. Members never choose a region — you did that for them in Step 2.</p>
+
+<p><strong>If someone already installed Anduin on their own.</strong> Ask them to remove that copy before using the one from your organization. Two Anduin plugins on the same account conflict, and only one of them will connect.</p>
+
+<h2>Keeping it up to date</h2>
+<p>The plugin itself changes rarely. New Anduin tools and fixes are delivered by Anduin's servers and reach your team without any update; a plugin release mostly refines the guidance Claude follows. Anduin's announcement will say when an update matters for you.</p>
+<p>When Anduin announces a release, it gives you the new <code>ref</code> line for your region (also listed on the <a href="https://github.com/anduintransaction/anduin-plugin/releases">releases page</a>). Claude only re-syncs your marketplace when <em>your</em> repository changes, so:</p>
+<ol>
+  <li>In your <code>marketplace.json</code>, change only the Anduin entry's <code>ref</code> line to the new tag, exactly as given (keep the <code>-eu</code> ending if you're on EU).</li>
+  <li>Commit the change through a pull request and merge it.</li>
+  <li>Open <strong>Organization settings → Plugins</strong>. If you've enabled automatic sync, the merge may already have synced; otherwise click <strong>Update</strong> on your marketplace.</li>
+  <li>Check that the plugin shows the new version.</li>
+</ol>
+<p>Members get the new version in their next Claude session. To go back, restore the previous tag the same way. Keep your other plugin entries, marketplace name and owner as they are, and check the file is still valid JSON before committing.</p>
+<div class="callout">
+  <p><strong>If you get stuck</strong></p>
+  <ul>
+    <li><strong>Claude can't find your repository:</strong> make sure it's private and that the Claude GitHub App is installed on it — public repositories aren't accepted at this step.</li>
+    <li><strong>Sign-in fails, or your funds and rooms are missing:</strong> first confirm your Anduin region with your Anduin contact and compare it with the <code>ref</code> line in your file (a tag ending in <code>-eu</code> is EU; otherwise US). If they don't match, change only that <code>ref</code> line to the value for your region (keep everything else in the file), commit, and click <strong>Update</strong> on your marketplace; members should start a new Claude session and sign in to Anduin again. If they do match, check that the marketplace sync succeeded and that the member doesn't also have an older personal copy of the plugin installed; then check that they can sign in to Anduin itself and have access to the fund or room.</li>
+    <li><strong>Plugins disappeared after an update:</strong> a failed sync can temporarily remove plugins for your members. Check that the file is valid JSON and the <code>ref</code> matches a release tag exactly, commit the fix, and click <strong>Update</strong> again. Then confirm the plugin is still offered to your members the way you chose in Step 5.</li>
+    <li><strong>Anduin is installed but Claude has no Anduin tools:</strong> check that the plugin is enabled and the Anduin connection shows as connected; reconnect it and approve the access it requests. If it still has no tools, contact Anduin — the cause may be on the server side.</li>
+    <li><strong>A chart or table doesn't appear:</strong> ask Claude for the result as text or a table instead.</li>
+    <li><strong>No GitHub at all?</strong> An admin can upload a plugin file instead, from <strong>Add plugins → Upload a file</strong>. Use the ZIP <strong>for your region (US or EU)</strong> from the <a href="https://github.com/anduintransaction/anduin-plugin/releases">releases page</a>, or ask your Anduin contact for it. To update later, upload the newer ZIP; it replaces the old one.</li>
+  </ul>
+</div>
+
+<hr>
+<p class="small">Access is always user-scoped: making the plugin available doesn't grant Anduin anything on its own. Each person signs in individually, and Claude only ever reaches what that user's existing Anduin permissions allow.</p>
+<p class="small">Anthropic's official references: <a href="https://support.claude.com/en/articles/13837433-manage-plugins-for-your-organization">Manage plugins for your organization</a> · <a href="https://code.claude.com/docs/en/plugin-marketplaces#distribute-through-organization-settings">Distribute through organization settings</a>.</p>
+
+</body>
+</html>
