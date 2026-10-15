@@ -71,12 +71,14 @@ plugins/anduin/                       — Anduin platform plugin
 scripts/build-eu-plugin.sh            — Rewrites a copy of plugins/anduin for EU (URL + `-eu` version); `--check` verifies marketplace
                                         sources and that the guide, README and CHANGELOG name the current release
 scripts/release-notes.py              — Writes the GitHub Release notes from CHANGELOG.md
-scripts/render-guide.sh               — Renders the admin guide to docs/*.pdf (gitignored) with headless Chrome
+scripts/render-guide.sh               — Renders the admin guide to docs/*.pdf (gitignored) with headless Chrome; CI runs it too
 
 .github/workflows/check.yml           — PR/push: `--check` and a trial EU build
+.github/workflows/guide.yml           — Push to main touching the guide: renders the PDF and attaches it to the release the
+                                        guide names (`releases/latest/download/Anduin_MCP_Enablement_Guide_Claude.pdf` is stable)
 .github/workflows/release.yml         — On tag vX.Y.Z: validates tag == plugin.json version, commits the EU build, tags vX.Y.Z-eu
                                         (no-op if that tag exists and holds the EU build; fails if it exists from a different
-                                        commit), then publishes a GitHub Release with both refs and one ZIP per region
+                                        commit), then publishes a GitHub Release with both refs, one ZIP per region and the guide PDF
 
 docs/Anduin_MCP_Enablement_Guide_Claude.html — Customer guide for organization admins (source of the PDF we send)
 CHANGELOG.md                          — One `## X.Y.Z` section per release (required by `--check`)
@@ -125,10 +127,10 @@ Available environments:
 Prerequisite: GitHub Actions enabled on the repository with **Read and write** workflow permissions (the release workflow pushes a tag and creates a Release).
 
 1. Bump `version` in `plugins/anduin/.claude-plugin/plugin.json` and add a `## X.Y.Z` section to `CHANGELOG.md`.
-2. Update the tags that name the release: the `anduin-eu` entry's `ref` in `.claude-plugin/marketplace.json`, the README organization example, and the guide's two JSON blocks. `scripts/build-eu-plugin.sh --check` fails until all of them name the new release.
+2. Update the tags that name the release: the `anduin-eu` entry's `ref` in `.claude-plugin/marketplace.json`, the README organization example, and the guide's two JSON blocks plus its "Installing without GitHub" release-page and ZIP download links. `scripts/build-eu-plugin.sh --check` fails until all of them name the new release.
 3. Merge to `main`, then push an annotated tag `vX.Y.Z` by hand. A tag pushed with `GITHUB_TOKEN` would not trigger the workflow.
 4. Confirm the Action published `vX.Y.Z-eu` and the GitHub Release (paste-ready `ref` lines, commit SHAs, one ZIP per region). If it fails, re-run it from the Actions tab: a re-run reuses the `-eu` tag only if it matches a fresh EU build, keeps assets already uploaded, adds missing ones and publishes a leftover draft. Until it succeeds, the `anduin-eu` entry, README and guide point at a tag that does not exist.
-5. Run `scripts/render-guide.sh` and send the PDF with the release announcement.
+5. Send the release announcement with the guide link from the Release assets (CI renders the PDF; run `scripts/render-guide.sh` only to preview it locally).
 
 Never move or delete `v*` tags by hand: customers pin them.
 

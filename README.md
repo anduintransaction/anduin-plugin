@@ -66,9 +66,11 @@ An organization Owner can offer the plugin to every member through the organizat
    | Production (US) | `"ref": "v0.10.0"` |
    | Production (EU) | `"ref": "v0.10.0-eu"` |
 
-2. Connect the repository in **Organization settings → Plugins**, try the plugin yourself, then choose who gets it. Members see a single Anduin connection for the right region.
+2. Connect the repository in **Organization settings → Plugins & skills** (**Add → Sync from GitHub**), try the plugin yourself, then choose who gets it. Members see a single Anduin connection for the right region.
 
-**Releases.** Every release publishes a `vX.Y.Z` tag and its `vX.Y.Z-eu` twin. The [releases page](https://github.com/anduintransaction/anduin-plugin/releases) lists both `ref` lines ready to paste, the matching commits, and a ZIP per region for organizations without GitHub.
+**Releases.** Every release publishes a `vX.Y.Z` tag and its `vX.Y.Z-eu` twin. The [releases page](https://github.com/anduintransaction/anduin-plugin/releases) lists both `ref` lines ready to paste, the matching commits, and a ZIP per region.
+
+**Without GitHub.** An Owner can instead upload the ZIP for your region from the releases page in **Organization settings → Plugins & skills → Add → Upload a plugin**, then set its availability. ZIP installs do not update on their own: upload the new release's ZIP with **Upload new version**. See "Installing without GitHub" in the [admin guide](docs/Anduin_MCP_Enablement_Guide_Claude.html) and Anthropic's [organization plugin docs](https://claude.com/docs/plugins/admin#add-your-own-plugins).
 
 **Updating.** Claude syncs an organization marketplace only when your own marketplace repository changes, so a new Anduin release never arrives by itself:
 
@@ -122,7 +124,9 @@ Within each domain, admin includes write and read; write includes read. Renderin
 
 ## Building the admin guide (PDF)
 
-The organization admin guide is maintained as HTML in [docs/Anduin_MCP_Enablement_Guide_Claude.html](docs/Anduin_MCP_Enablement_Guide_Claude.html). To produce the PDF that is sent to customers, run this from the repository root:
+The organization admin guide is maintained as HTML in [docs/Anduin_MCP_Enablement_Guide_Claude.html](docs/Anduin_MCP_Enablement_Guide_Claude.html). CI renders it and attaches the PDF to every release, so the current guide is always at a stable link: <https://github.com/anduintransaction/anduin-plugin/releases/latest/download/Anduin_MCP_Enablement_Guide_Claude.pdf>. A change to the guide on `main` re-attaches the PDF to the release it names.
+
+To render it locally, run this from the repository root:
 
 ```bash
 scripts/render-guide.sh

@@ -1,0 +1,45 @@
+name: Admin guide
+
+# Renders docs/Anduin_MCP_Enablement_Guide_Claude.html and attaches the PDF to the GitHub Release
+# the guide names, so customers get it from a stable link instead of an emailed file.
+on:
+  push:
+    branches: [main]
+    paths: ['docs/*.html', 'scripts/render-guide.sh', '.github/workflows/guide.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  publish-pdf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Guide names the current release
+        run: |
+          scripts/build-eu-plugin.sh --check
+          echo "version=$(python3 -c 'import json; print(json.load(open("plugins/anduin/.claude-plugin/plugin.json"))["version"])')" >> "$GITHUB_ENV"
+      - name: Render the PDF
+        run: scripts/render-guide.sh "$RUNNER_TEMP/Anduin_MCP_Enablement_Guide_Claude.pdf"
+      - name: Attach it to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="v$version"
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            # Between a version bump and its tag there is no release yet; release.yml attaches the guide then.
+            echo "::notice::Release $tag is not published yet; the guide will be attached by the release workflow."
+            exit 0
+          fi
+          gh release upload "$tag" "$RUNNER_TEMP/Anduin_MCP_Enablement_Guide_Claude.pdf" --clobber
+          base="https://github.com/${GITHUB_REPOSITORY}/releases"
+          {
+            echo "Admin guide attached to $tag:"
+            echo "- $base/download/$tag/Anduin_MCP_Enablement_Guide_Claude.pdf"
+            echo "- stable: $base/latest/download/Anduin_MCP_Enablement_Guide_Claude.pdf"
+          } | tee -a "$GITHUB_STEP_SUMMARY"

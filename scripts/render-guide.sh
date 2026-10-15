@@ -17,5 +17,10 @@ if [[ -z "$chrome" ]]; then
   exit 1
 fi
 
-"$chrome" --headless=new --disable-gpu --no-pdf-header-footer --print-to-pdf="$out" "file://$src" 2>/dev/null
+if [[ -n "${CI:-}" ]]; then
+  "$chrome" --headless=new --disable-gpu --no-pdf-header-footer --print-to-pdf="$out" "file://$src"
+else
+  "$chrome" --headless=new --disable-gpu --no-pdf-header-footer --print-to-pdf="$out" "file://$src" 2>/dev/null
+fi
+test -s "$out"
 echo "wrote $out"

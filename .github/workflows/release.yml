@@ -1,7 +1,7 @@
 name: Release
 
 # Every release tag vX.Y.Z gets an immutable vX.Y.Z-eu tag whose plugins/anduin points at
-# the EU server, plus a GitHub Release with paste-ready refs and one ZIP per region.
+# the EU server, plus a GitHub Release with paste-ready refs, one ZIP per region and the admin guide PDF.
 on:
   push:
     tags: ['v[0-9]+.[0-9]+.[0-9]+']
@@ -33,6 +33,7 @@ jobs:
           scripts/build-eu-plugin.sh "$RUNNER_TEMP/anduin-eu"
           (cd plugins/anduin && zip -qr "$RUNNER_TEMP/assets/anduin-us-$version.zip" .)
           (cd "$RUNNER_TEMP/anduin-eu" && zip -qr "$RUNNER_TEMP/assets/anduin-eu-$version.zip" .)
+          scripts/render-guide.sh "$RUNNER_TEMP/assets/Anduin_MCP_Enablement_Guide_Claude.pdf"
       - name: Publish the EU tag
         run: |
           eu="${GITHUB_REF_NAME}-eu"
@@ -68,11 +69,11 @@ jobs:
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
             # Retry: keep assets customers may already use, add missing ones, publish a leftover draft.
             have="$(gh release view "$GITHUB_REF_NAME" --json assets --jq '.assets[].name')"
-            for z in "$RUNNER_TEMP"/assets/*.zip; do
+            for z in "$RUNNER_TEMP"/assets/*; do
               grep -qxF "$(basename "$z")" <<<"$have" || gh release upload "$GITHUB_REF_NAME" "$z"
             done
             gh release edit "$GITHUB_REF_NAME" --notes-file "$RUNNER_TEMP/notes.md" --draft=false
           else
             gh release create "$GITHUB_REF_NAME" --verify-tag --title "$GITHUB_REF_NAME" \
-              --notes-file "$RUNNER_TEMP/notes.md" "$RUNNER_TEMP"/assets/*.zip
+              --notes-file "$RUNNER_TEMP/notes.md" "$RUNNER_TEMP"/assets/*
           fi

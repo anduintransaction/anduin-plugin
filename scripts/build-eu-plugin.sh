@@ -45,8 +45,9 @@ readme = open(f"{root}/README.md").read()
 if f'"ref": "v{want}"' not in readme or f'"ref": "v{want}-eu"' not in readme:
     sys.exit(f"README.md organization example must use v{want} and v{want}-eu")
 stale = {t for doc in (guide, readme) for t in re.findall(r"v\d+\.\d+\.\d+(?:-eu)?", doc)} - {f"v{want}", f"v{want}-eu"}
+stale |= {z for z in re.findall(r"anduin-(?:us|eu)-\d+\.\d+\.\d+\.zip", guide) if f"-{want}.zip" not in z}
 if stale:
-    sys.exit(f"guide/README still mention other release tags: {sorted(stale)}")
+    sys.exit(f"guide/README still mention other release tags or ZIPs: {sorted(stale)}")
 if not re.search(rf"^## {re.escape(want)}\b", open(f"{root}/CHANGELOG.md").read(), re.M):
     sys.exit(f"CHANGELOG.md needs a '## {want}' section")
 print(f"release metadata consistent for {want} / {want}-eu")

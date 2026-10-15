@@ -16,7 +16,7 @@ print(f"""Organization admins: set the `ref` line of your Anduin marketplace ent
 | Production (US) | `"ref": "v{version}"` | `{us_sha}` |
 | Production (EU) | `"ref": "v{version}-eu"` | `{eu_sha}` |
 
-No GitHub? Upload `anduin-us-{version}.zip` or `anduin-eu-{version}.zip` from the assets below.
+No GitHub? Upload `anduin-us-{version}.zip` or `anduin-eu-{version}.zip` from the assets below. The admin guide for this release is `Anduin_MCP_Enablement_Guide_Claude.pdf`, also below.
 
 ## Changes
 
