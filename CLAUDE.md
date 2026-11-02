@@ -10,6 +10,10 @@ A Claude Code plugin that provides AI assistants for Anduin platform domains:
 
 The plugin has one source folder, `plugins/anduin`, hardcoded to Production US. Each release tag `vX.Y.Z` also gets a CI-generated, immutable `vX.Y.Z-eu` tag whose copy points at Production EU. Users install exactly one region. Authentication is OAuth2. It works on both Claude Code (CLI) and Cowork (desktop app) with no setup required.
 
+A second plugin, `plugins/anduin-web-builder`, lets Claude edit the Anduin landing page builder open in the user's
+Chrome over WebMCP, through a local `chrome-devtools-mcp` server. It has no regional build: the release workflow and
+`build-eu-plugin.sh` touch only `plugins/anduin`, and `--check` constrains only the `anduin` and `anduin-eu` entries.
+
 ## Local Development
 
 ```bash
@@ -57,6 +61,11 @@ outside this repository.
 
 ```
 .claude-plugin/marketplace.json       — Marketplace manifest (lists all plugins)
+
+plugins/anduin-web-builder/           — Anduin Web Builder plugin: a chrome-devtools-mcp server and one skill
+  .claude-plugin/plugin.json          — Its own version, outside the vX.Y.Z release tags
+  .mcp.json                           — chrome-devtools (local, Chrome)
+  skills/build-landing-page/SKILL.md  — Leads the agent to the builder tab's WebMCP tools
 
 plugins/anduin/                       — Anduin platform plugin
   .claude-plugin/plugin.json          — Plugin manifest (name, version, description)

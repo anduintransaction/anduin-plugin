@@ -29,8 +29,10 @@ if any("version" in e for e in entries):
 src = {e["name"]: e.get("source") for e in entries}
 eu = {"source": "git-subdir", "url": "https://github.com/anduintransaction/anduin-plugin.git",
       "path": "plugins/anduin", "ref": f"v{want}-eu"}
-if src != {"anduin": "./plugins/anduin", "anduin-eu": eu}:
-    sys.exit(f"marketplace.json sources must be ./plugins/anduin and {eu}, got {src}")
+# Other plugins may sit beside these two; they have no regional build.
+got = {name: src.get(name) for name in ("anduin", "anduin-eu")}
+if got != {"anduin": "./plugins/anduin", "anduin-eu": eu}:
+    sys.exit(f"marketplace.json sources must be ./plugins/anduin and {eu}, got {got}")
 if json.load(open(f"{root}/plugins/anduin/.claude-plugin/plugin.json"))["name"] != "anduin":
     sys.exit("plugin.json name must stay `anduin` (agents allow mcp__plugin_anduin_anduin__*)")
 if list(json.load(open(f"{root}/plugins/anduin/.mcp.json"))["mcpServers"]) != ["anduin"]:

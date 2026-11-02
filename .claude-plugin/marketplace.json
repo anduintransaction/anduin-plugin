@@ -19,6 +19,12 @@
         "ref": "v0.10.0-eu"
       },
       "description": "Data room management and fund subscription review for the Anduin platform — Production (EU) accounts"
+    },
+    {
+      "name": "anduin-web-builder",
+      "displayName": "Anduin Web Builder",
+      "source": "./plugins/anduin-web-builder",
+      "description": "Build your Anduin landing page with Claude, live in the builder open in Chrome"
     }
   ]
 }
