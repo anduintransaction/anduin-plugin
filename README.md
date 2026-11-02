@@ -112,6 +112,18 @@ Consent shows the scopes requested by the connection, not every supported permis
 
 Within each domain, admin includes write and read; write includes read. Rendering is separate. OAuth consent does **not** grant fund/room roles or upgrade your plan.
 
+## Anduin Web Builder
+
+**Anduin Web Builder** (`anduin-web-builder`) is a separate plugin that lets Claude build and edit your Anduin landing page in the builder you have open in Chrome, while you watch. It reaches the builder tab through Chrome DevTools rather than the Anduin connection, so there is no sign-in and it works in either region, but it needs some setup on your computer:
+
+- Chrome 150 or newer, with WebMCP turned on (`chrome://flags/#enable-webmcp-testing`) and remote debugging allowed (`chrome://inspect/#remote-debugging`). The builder's **Build with your AI agent** panel walks you through both. Use a separate Chrome profile: Claude can control every tab in it.
+- Node.js 22.12 or newer, from [nodejs.org](https://nodejs.org).
+- AI agent editing turned on for your firm. If the builder doesn't show **Build with your AI agent**, ask your Anduin contact.
+
+Install it from this marketplace: run `/plugin install anduin-web-builder@anduin-marketplace` in Claude Code, or install **Anduin Web Builder** under **Customize → Plugins** in Cowork. Its connector runs on your computer, so it works in Claude Code and in Cowork tasks that run on your computer, with the Claude app open. Cowork tasks that run in the cloud can't reach your browser.
+
+In the builder, click **Open for AI to connect**, then ask Claude for the change you want, for example "Add a team section with our four partners." Nothing is saved until you click **Save** in the builder.
+
 ## Troubleshooting and updates
 
 - **Missing connection or tools:** check that the plugin is enabled and connected (`/plugin` and `/mcp` in Claude Code). Availability can also depend on scopes and the server's tool catalog.
