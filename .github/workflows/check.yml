@@ -20,3 +20,6 @@ jobs:
       - run: scripts/build-eu-plugin.sh --check
       - name: EU build succeeds
         run: scripts/build-eu-plugin.sh "$RUNNER_TEMP/anduin-eu" && cat "$RUNNER_TEMP/anduin-eu/.mcp.json"
+      - name: Admin guide renders
+        # The PDF is attached only when a release is published; this catches a broken guide before then.
+        run: scripts/render-guide.sh "$RUNNER_TEMP/Anduin_MCP_Enablement_Guide_Claude.pdf"

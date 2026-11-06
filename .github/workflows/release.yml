@@ -2,6 +2,7 @@ name: Release
 
 # Every release tag vX.Y.Z gets an immutable vX.Y.Z-eu tag whose plugins/anduin points at
 # the EU server, plus a GitHub Release with paste-ready refs, one ZIP per region and the admin guide PDF.
+# The Release is a draft until every asset is attached: once published it is immutable (tag and assets locked).
 on:
   push:
     tags: ['v[0-9]+.[0-9]+.[0-9]+']
@@ -65,15 +66,41 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          tag="$GITHUB_REF_NAME"
           python3 scripts/release-notes.py "$version" "$GITHUB_SHA" "$eu_sha" > "$RUNNER_TEMP/notes.md"
-          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            # Retry: keep assets customers may already use, add missing ones, publish a leftover draft.
-            have="$(gh release view "$GITHUB_REF_NAME" --json assets --jq '.assets[].name')"
-            for z in "$RUNNER_TEMP"/assets/*; do
-              grep -qxF "$(basename "$z")" <<<"$have" || gh release upload "$GITHUB_REF_NAME" "$z"
-            done
-            gh release edit "$GITHUB_REF_NAME" --notes-file "$RUNNER_TEMP/notes.md" --draft=false
+          expected="$(ls "$RUNNER_TEMP/assets" | sort)"
+          attached() { gh release view "$tag" --json assets --jq '.assets[].name' | sort; }
+          state="$(gh release view "$tag" --json isDraft --jq 'if .isDraft then "draft" else "published" end' 2>/dev/null || echo none)"
+          case "$state" in
+            none)
+              gh release create "$tag" --draft --verify-tag --title "$tag" \
+                --notes-file "$RUNNER_TEMP/notes.md" "$RUNNER_TEMP"/assets/*
+              ;;
+            draft)
+              # A previous run died before publishing; a draft is still mutable, so finish it.
+              gh release upload "$tag" "$RUNNER_TEMP"/assets/* --clobber
+              gh release edit "$tag" --notes-file "$RUNNER_TEMP/notes.md"
+              ;;
+            published)
+              if [[ "$(attached)" == "$expected" ]]; then
+                echo "$tag is already published with every asset; nothing to do"
+                exit 0
+              fi
+              # Assets of a published release cannot change, and a deleted release's tag name cannot be reused.
+              echo "$tag is published with assets [$(attached | xargs)] but this build has [$(xargs <<<"$expected")]; release the next patch version" >&2
+              exit 1
+              ;;
+          esac
+          if [[ "$(attached)" != "$expected" ]]; then
+            echo "draft $tag holds [$(attached | xargs)] but this build has [$(xargs <<<"$expected")]; re-run this workflow" >&2
+            exit 1
+          fi
+          gh release edit "$tag" --draft=false --latest
+          if [[ "$(gh release view "$tag" --json isImmutable --jq .isImmutable)" == "true" ]]; then
+            # Notes stay editable after publish; now that the attestation exists, tell customers how to verify.
+            python3 scripts/release-notes.py "$version" "$GITHUB_SHA" "$eu_sha" --immutable > "$RUNNER_TEMP/notes.md"
+            gh release edit "$tag" --notes-file "$RUNNER_TEMP/notes.md"
+            echo "Published $tag as an immutable release" | tee -a "$GITHUB_STEP_SUMMARY"
           else
-            gh release create "$GITHUB_REF_NAME" --verify-tag --title "$GITHUB_REF_NAME" \
-              --notes-file "$RUNNER_TEMP/notes.md" "$RUNNER_TEMP"/assets/*
+            echo "::warning::$tag was published mutable; enable Settings → General → Releases → Immutable releases"
           fi
