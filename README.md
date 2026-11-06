@@ -136,7 +136,7 @@ In the builder, click **Open for AI to connect**, then ask Claude for the change
 
 ## Building the admin guide (PDF)
 
-The organization admin guide is maintained as HTML in [docs/Anduin_MCP_Enablement_Guide_Claude.html](docs/Anduin_MCP_Enablement_Guide_Claude.html). CI renders it and attaches the PDF to every release, so the current guide is always at a stable link: <https://github.com/anduintransaction/anduin-plugin/releases/latest/download/Anduin_MCP_Enablement_Guide_Claude.pdf>. A change to the guide on `main` re-attaches the PDF to the release it names.
+The organization admin guide is maintained as HTML in [docs/Anduin_MCP_Enablement_Guide_Claude.html](docs/Anduin_MCP_Enablement_Guide_Claude.html). CI renders it and attaches the PDF to every release, so the current guide is always at a stable link: <https://github.com/anduintransaction/anduin-plugin/releases/latest/download/Anduin_MCP_Enablement_Guide_Claude.pdf>. A published release is immutable, so a change to the guide reaches customers with the next release.
 
 To render it locally, run this from the repository root:
 
