@@ -24,7 +24,7 @@
       "name": "anduin-web-builder",
       "displayName": "Anduin Web Builder",
       "source": "./plugins/anduin-web-builder",
-      "description": "Build your Anduin landing page with Claude, live in the builder open in Chrome"
+      "description": "Build your Anduin landing page with Claude in the builder tab you have open"
     }
   ]
 }
