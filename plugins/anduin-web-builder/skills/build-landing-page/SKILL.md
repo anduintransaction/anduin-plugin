@@ -3,11 +3,18 @@ name: build-landing-page
 description: Builds or changes the user's Anduin landing page in their open builder tab. Use when they ask to create, design, edit or restyle a landing page, or mention the Anduin landing page builder.
 ---
 
-The user's Anduin landing page builder is open in Chrome, and it exposes its own tools over WebMCP. Reach them through the chrome-devtools connector:
+The user's Anduin landing page builder is open in their browser. This plugin's `anduin-builder` tools reach it:
 
-1. Call `list_pages`, then `select_page` on the tab that shows the landing page builder.
-2. Call `list_webmcp_tools`. Run the builder's tools with `execute_webmcp_tool`, passing their parameters as a JSON string.
-3. Call the builder's `get_guide` tool first and follow it, then make the change the user asked for.
-4. Check your work with the builder's `show_page` tool and `take_screenshot`.
+1. Get the 6-character code. It is usually in the user's message ("…with code K7Q2PX…"). If not, ask them to click
+   "Open for AI to connect" in the builder (the sparkles button in the left rail) and read you the code shown in the
+   top bar. Call `connect_builder` with it.
+2. Call `list_builder_tools`, then `call_builder_tool` with `get_guide`, and follow the guide.
+3. Make the change with `call_builder_tool` (`read_page`, `get_schema`, `edit_page`, …), passing each tool's input as
+   an object.
+4. Check your work: `call_builder_tool` with `check_page` for `desktop` and `mobile` on the sections you changed. Fix
+   what it finds and check again.
+5. When you finish, tell the user to review the page, click Save, then Exit AI mode. Nothing is saved until they click
+   Save.
 
-If `list_webmcp_tools` shows no builder tools, ask the user to open "Build with your AI agent" in the builder's left rail and click "Open for AI to connect". Nothing is saved until the user clicks Save.
+Change the page only through these tools. If a tool says the builder disconnected, ask the user to click "Open for AI
+to connect" again and give you the new code.

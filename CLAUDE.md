@@ -10,9 +10,11 @@ A Claude Code plugin that provides AI assistants for Anduin platform domains:
 
 The plugin has one source folder, `plugins/anduin`, hardcoded to Production US. Each release tag `vX.Y.Z` also gets a CI-generated, immutable `vX.Y.Z-eu` tag whose copy points at Production EU. Users install exactly one region. Authentication is OAuth2. It works on both Claude Code (CLI) and Cowork (desktop app) with no setup required.
 
-A second plugin, `plugins/anduin-web-builder`, lets Claude edit the Anduin landing page builder open in the user's
-Chrome over WebMCP, through a local `chrome-devtools-mcp` server. It has no regional build: the release workflow and
-`build-eu-plugin.sh` touch only `plugins/anduin`, and `--check` constrains only the `anduin` and `anduin-eu` entries.
+A second plugin, `plugins/anduin-web-builder`, lets Claude edit the Anduin landing page builder tab the user has open.
+It runs a small local MCP server (`server/dist/server.mjs`, Node ≥ 20) that the builder tab connects to on
+`127.0.0.1:47811-47815`; the agent pairs with the tab by the code the builder shows. It has no regional build: the
+release workflow and `build-eu-plugin.sh` touch only `plugins/anduin`, and `--check` constrains only the `anduin` and
+`anduin-eu` entries.
 
 ## Local Development
 
@@ -55,17 +57,21 @@ claude --plugin-dir ./plugins/anduin
 
 ## Plugin Architecture
 
-This is a **content-only plugin** — no runtime build step or application dependencies. Runtime files are Markdown
-or JSON. Keep repository documentation customer-facing; internal plans, reviews, and test-run records belong
-outside this repository.
+`plugins/anduin` is content-only — no runtime build step or application dependencies. `plugins/anduin-web-builder`
+ships one bundled runtime file, `server/dist/server.mjs`, built from `server/src` with `npm run build` and committed
+(plugins install straight from git). Otherwise runtime files are Markdown or JSON. Keep repository documentation
+customer-facing; internal plans, reviews, and test-run records belong outside this repository.
 
 ```
 .claude-plugin/marketplace.json       — Marketplace manifest (lists all plugins)
 
-plugins/anduin-web-builder/           — Anduin Web Builder plugin: a chrome-devtools-mcp server and one skill
+plugins/anduin-web-builder/           — Anduin Web Builder plugin: a local bridge server and one skill
   .claude-plugin/plugin.json          — Its own version, outside the vX.Y.Z release tags
-  .mcp.json                           — chrome-devtools (local, Chrome)
-  skills/build-landing-page/SKILL.md  — Leads the agent to the builder tab's WebMCP tools
+  .mcp.json                           — anduin-builder (local, node server/dist/server.mjs)
+  server/src/                         — bridge.mjs (pairing + relay), server.mjs (MCP tools)
+  server/test/                        — node:test suite (npm test)
+  server/dist/server.mjs              — Committed esbuild bundle; CI fails if it differs from a fresh build
+  skills/build-landing-page/SKILL.md  — Pair by code, follow the builder's guide, check with check_page
 
 plugins/anduin/                       — Anduin platform plugin
   .claude-plugin/plugin.json          — Plugin manifest (name, version, description)
