@@ -8,6 +8,7 @@ export const PORTS = [47811, 47812, 47813, 47814, 47815];
 const HOST = "127.0.0.1";
 const MAX_PENDING = 20;
 const MAX_PAYLOAD = 8 * 1024 * 1024;
+const HELLO_TIMEOUT_MS = 5000;
 const CODE = /^[ABCDEFGHJKMNPQRSTUVWXYZ2-9]{6}$/;
 
 export const Text = {
@@ -34,10 +35,17 @@ export const Text = {
   builderTooOld: "This builder page is older than your agent's plugin. Reload the page."
 };
 
-export async function startBridge({ ports = PORTS, host = HOST, maxPending = MAX_PENDING } = {}) {
-  const wss = await listenOnFirstFree(ports, host);
+export async function startBridge({
+  ports = PORTS,
+  host = HOST,
+  maxPending = MAX_PENDING,
+  maxPayload = MAX_PAYLOAD,
+  helloTimeoutMs = HELLO_TIMEOUT_MS
+} = {}) {
+  const wss = await listenOnFirstFree(ports, host, maxPayload);
   const pending = new Map(); // code -> { ws, title }
   const calls = new Map(); // id -> { ws, done }
+  const helloed = new WeakSet(); // sockets that have sent their one hello
   let paired = null; // { ws, title, code }
   let nextId = 1;
 
@@ -50,6 +58,11 @@ export async function startBridge({ ports = PORTS, host = HOST, maxPending = MAX
   };
 
   wss?.on("connection", (ws) => {
+    // A bad frame (too big, bad UTF-8) makes ws emit 'error', which would crash the process without a listener.
+    // 'close' still follows, and gone() answers the socket's in-flight calls.
+    ws.on("error", () => {});
+    // A socket that never says hello would hold a connection forever, so it is closed after helloTimeoutMs.
+    const helloTimer = setTimeout(() => ws.close(4002, "no hello"), helloTimeoutMs);
     ws.on("message", (data) => {
       let message;
       try {
@@ -58,13 +71,21 @@ export async function startBridge({ ports = PORTS, host = HOST, maxPending = MAX
         ws.close(4002, "not json");
         return;
       }
-      if (message?.type === "hello") hello(ws, message);
-      else if (message?.type === "tools" || message?.type === "result") answer(ws, message);
+      if (message?.type === "hello") {
+        clearTimeout(helloTimer);
+        hello(ws, message);
+      } else if (message?.type === "tools" || message?.type === "result") answer(ws, message);
     });
-    ws.on("close", () => gone(ws));
+    ws.on("close", () => {
+      clearTimeout(helloTimer);
+      gone(ws);
+    });
   });
 
   function hello(ws, { v, code, title }) {
+    // One hello per socket: a second one, including from the paired tab, is ignored.
+    if (helloed.has(ws)) return;
+    helloed.add(ws);
     if (v !== PROTOCOL_VERSION) {
       refuse(ws, typeof v === "number" && v > PROTOCOL_VERSION ? Text.pluginTooOld : Text.builderTooOld);
       return;
@@ -171,10 +192,10 @@ export async function startBridge({ ports = PORTS, host = HOST, maxPending = MAX
   };
 }
 
-async function listenOnFirstFree(ports, host) {
+async function listenOnFirstFree(ports, host, maxPayload) {
   for (const port of ports) {
     const wss = await new Promise((resolve) => {
-      const server = new WebSocketServer({ host, port, maxPayload: MAX_PAYLOAD });
+      const server = new WebSocketServer({ host, port, maxPayload });
       server.once("listening", () => resolve(server));
       server.once("error", () => resolve(null));
     });
