@@ -16,5 +16,8 @@ The user's Anduin landing page builder is open in their browser. This plugin's `
 5. When you finish, tell the user to review the page, click Save, then Exit AI mode. Nothing is saved until they click
    Save.
 
-Change the page only through these tools. If a tool says the builder disconnected, ask the user to click "Open for AI
-to connect" again and give you the new code.
+Change the page only through these tools. If a tool says the builder disconnected, and its top bar still shows a code,
+call `connect_builder` with it again (ask the user to click Retry if needed); otherwise ask them to click "Open for AI
+to connect" and give you the new code. Then call `read_page`. If `connect_builder` says no builder is waiting with the
+code, ask the user to click Retry in the builder's top bar (or, if it shows "No agent found", click Retry after starting
+you), then try again.
