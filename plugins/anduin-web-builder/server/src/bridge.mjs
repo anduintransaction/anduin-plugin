@@ -17,21 +17,21 @@ export const Text = {
     "give you the code it shows, then call connect_builder.",
   wrongCode: (code) =>
     `No builder is waiting with code ${code}. Ask the user for the code the builder shows; it changes each ` +
-    'time they click "Connect your agent". If the builder still shows that code, ask the user to click Retry ' +
-    "under it.",
+    'time they click "Connect your agent". If the builder still shows that code, wait a few seconds and ' +
+    "try again: the builder keeps looking for agents.",
   connected: (title) =>
     `Connected to the builder${title ? ` (page titled ${JSON.stringify(title)})` : ""}. Call list_builder_tools, ` +
     "then call_builder_tool with get_guide and follow it.",
   disconnected:
     "The builder disconnected before replying. The change may or may not have applied: if the builder still " +
-    "shows a code, call connect_builder with it again (ask the user to click Retry if needed); otherwise ask " +
+    "shows a code, call connect_builder with it again (wait a few seconds and retry if it isn't found); otherwise ask " +
     'them to click "Connect your agent" and give you the new code. Then call read_page.',
   cancelled: "Cancelled. The builder may still finish the change: call read_page before you retry.",
   portsBusy:
     `Ports ${PORTS[0]}-${PORTS[PORTS.length - 1]} are all in use, so the builder cannot reach this agent. Ask the ` +
     "user to close another agent session that has the Anduin Web Builder plugin, then restart this one.",
   // Shown to the user in the builder's connect dialog.
-  tooManyTabs: "Too many builder tabs are waiting for an agent. Close some, then click Retry.",
+  tooManyTabs: "Too many builder tabs are waiting for an agent. Close some; this one connects once there's room.",
   codeTaken: "That code is already in use. Cancel or exit AI mode, then click Connect your agent again.",
   pluginTooOld: "Your agent's Anduin Web Builder plugin is older than this builder. Update the plugin and restart your agent.",
   builderTooOld: "This builder page is older than your agent's plugin. Reload the page."

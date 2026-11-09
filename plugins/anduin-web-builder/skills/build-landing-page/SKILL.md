@@ -17,7 +17,6 @@ The user's Anduin landing page builder is open in their browser. This plugin's `
    Save.
 
 Change the page only through these tools. If a tool says the builder disconnected, and it still shows a code, call
-`connect_builder` with it again (ask the user to click Retry if needed); otherwise ask them to click "Connect your agent"
-and give you the new code. Then call `read_page`. If `connect_builder` says no builder is waiting with the code, ask the
-user to click Retry under the code in the builder (or, if it shows "No agent found", click Retry after starting you),
-then try again.
+`connect_builder` with it again; otherwise ask them to click "Connect your agent" and give you the new code. Then call
+`read_page`. If `connect_builder` says no builder is waiting with the code, wait a few seconds and try again: the builder
+keeps looking for agents, including one started after it showed the code.
