@@ -126,7 +126,7 @@ Within each domain, admin includes write and read; write includes read. Renderin
 
 Either way the connector runs on your computer, so it works in Claude Code and in Cowork tasks that run on your computer, with the Claude app open. Cowork tasks that run in the cloud can't reach your browser.
 
-In the builder, click the sparkles button in the left rail, then **Connect your agent**. The builder shows a code with a **Copy prompt** button. Paste the prompt into Claude, then describe the change you want, for example "Add a team section with our four partners." The builder enters AI edit mode once Claude connects. Nothing is saved until you click **Save** in the builder. Click **Exit AI mode** to take the page back.
+In the builder, click the sparkles button in the left rail, then **Connect your agent**. The builder shows a code with a **Copy prompt** button. Paste the prompt into Claude, then describe the change you want, for example "Add a team section with our four partners." The builder enters AI edit mode once Claude connects. Later, after **Exit AI mode** or a reload, **Connect your agent** reconnects to the same Claude session if it's still open, with no new code; choose **Use a different agent** to switch. Nothing is saved until you click **Save** in the builder. Click **Exit AI mode** to take the page back.
 
 ## Troubleshooting and updates
 
