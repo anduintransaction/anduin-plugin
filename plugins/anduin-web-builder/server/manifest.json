@@ -1,0 +1,29 @@
+{
+  "manifest_version": "0.3",
+  "name": "anduin-builder",
+  "display_name": "Anduin Web Builder",
+  "version": "0.2.0",
+  "description": "Lets Claude build your Anduin landing page in the builder tab you have open. Click Open for AI in the builder and give Claude the code it shows.",
+  "author": {
+    "name": "Anduin Transactions",
+    "url": "https://anduintransact.com"
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "dist/server.mjs",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/dist/server.mjs"]
+    }
+  },
+  "tools": [
+    { "name": "connect_builder", "description": "Pairs with the builder tab that shows this code." },
+    { "name": "list_builder_tools", "description": "Lists the connected builder's tools." },
+    { "name": "call_builder_tool", "description": "Runs one of the connected builder's tools." }
+  ],
+  "keywords": ["anduin", "landing-page", "webmcp"],
+  "compatibility": {
+    "platforms": ["darwin", "win32"],
+    "runtimes": { "node": ">=20.0.0" }
+  }
+}

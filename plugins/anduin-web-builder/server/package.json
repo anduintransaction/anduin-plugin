@@ -6,7 +6,8 @@
   "engines": { "node": ">=20" },
   "scripts": {
     "build": "esbuild src/server.mjs --bundle --platform=node --format=esm --target=node20 --outfile=dist/server.mjs --external:bufferutil --external:utf-8-validate --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\"",
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "mcpb": "npx -y @anthropic-ai/mcpb@2.1.2 pack . anduin-web-builder.mcpb"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.2",
