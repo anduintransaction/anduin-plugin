@@ -82,6 +82,10 @@ export async function startBridge({
       if (message?.type === "hello") {
         clearTimeout(helloTimer);
         hello(ws, message);
+      } else if (message?.type === "knows") {
+        // Lets the builder ask, before connecting, whether this agent would re-pair its code. It pairs nothing, and
+        // answers yes only for the last pairing's code from the same site, so it tells a page elsewhere nothing.
+        send(ws, { type: "knows", known: last?.code === message.code && last.origin === origins.get(ws) });
       } else if (message?.type === "tools" || message?.type === "result") answer(ws, message);
     });
     ws.on("close", () => {

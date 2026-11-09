@@ -40430,6 +40430,8 @@ async function startBridge({
       if (message?.type === "hello") {
         clearTimeout(helloTimer);
         hello(ws, message);
+      } else if (message?.type === "knows") {
+        send(ws, { type: "knows", known: last?.code === message.code && last.origin === origins.get(ws) });
       } else if (message?.type === "tools" || message?.type === "result") answer(ws, message);
     });
     ws.on("close", () => {

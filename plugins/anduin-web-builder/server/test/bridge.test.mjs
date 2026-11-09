@@ -305,3 +305,27 @@ test("the last code from another site does not re-pair: it waits for the agent l
     assert.equal((await bridge.listTools()).text, Text.notPaired);
   });
 });
+
+test("knows says yes only for the last pairing's code from the same site, and pairs nothing", async () => {
+  await withBridge({}, async (bridge) => {
+    const first = await tab(bridge.port);
+    bridge.connect("ABC234");
+    await first.next();
+    first.ws.close();
+    await first.closed;
+    await tick();
+    const ask = async (code, origin) => {
+      const ws = new WebSocket(`ws://127.0.0.1:${bridge.port}`, { origin });
+      await new Promise((resolve) => ws.once("open", resolve));
+      const reply = new Promise((resolve) => ws.once("message", (data) => resolve(JSON.parse(data.toString()))));
+      ws.send(JSON.stringify({ type: "knows", code }));
+      const answer = await reply;
+      ws.close();
+      return answer.known;
+    };
+    assert.equal(await ask("ABC234", "https://app.anduin.test"), true);
+    assert.equal(await ask("ABC234", "https://elsewhere.test"), false);
+    assert.equal(await ask("XYZ789", "https://app.anduin.test"), false);
+    assert.equal((await bridge.listTools()).text, Text.notPaired);
+  });
+});
