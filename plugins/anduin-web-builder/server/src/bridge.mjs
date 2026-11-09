@@ -13,11 +13,11 @@ const CODE = /^[ABCDEFGHJKMNPQRSTUVWXYZ2-9]{6}$/;
 
 export const Text = {
   notPaired:
-    'No builder connected. Ask the user to click "Open for AI to connect" in the Anduin landing page builder and ' +
+    'No builder connected. Ask the user to click "Enter AI mode" in the Anduin landing page builder and ' +
     "give you the code shown in its top bar, then call connect_builder.",
   wrongCode: (code) =>
     `No builder is waiting with code ${code}. Ask the user for the code in the builder's top bar; it changes each ` +
-    'time they click "Open for AI to connect". If the builder still shows that code, ask the user to click Retry in ' +
+    'time they click "Enter AI mode". If the builder still shows that code, ask the user to click Retry in ' +
     "its top bar.",
   connected: (title) =>
     `Connected to the builder${title ? ` (page titled ${JSON.stringify(title)})` : ""}. Call list_builder_tools, ` +
@@ -25,7 +25,7 @@ export const Text = {
   disconnected:
     "The builder disconnected before replying. The change may or may not have applied: if the builder's top bar " +
     "still shows a code, call connect_builder with it again (ask the user to click Retry if needed); otherwise ask " +
-    'them to click "Open for AI to connect" and give you the new code. Then call read_page.',
+    'them to click "Enter AI mode" and give you the new code. Then call read_page.',
   cancelled: "Cancelled. The builder may still finish the change: call read_page before you retry.",
   portsBusy:
     `Ports ${PORTS[0]}-${PORTS[PORTS.length - 1]} are all in use, so the builder cannot reach this agent. Ask the ` +

@@ -3,7 +3,7 @@
   "name": "anduin-builder",
   "display_name": "Anduin Web Builder",
   "version": "0.2.0",
-  "description": "Lets Claude build your Anduin landing page in the builder tab you have open. Click Open for AI in the builder and give Claude the code it shows.",
+  "description": "Lets Claude build your Anduin landing page in the builder tab you have open. Click Enter AI mode in the builder and give Claude the code it shows.",
   "author": {
     "name": "Anduin Transactions",
     "url": "https://anduintransact.com"
