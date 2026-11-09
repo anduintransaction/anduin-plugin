@@ -18,8 +18,8 @@ server.registerTool(
   "connect_builder",
   {
     description:
-      'Connects to the Anduin landing page builder tab the user opened for AI. The user clicks "Enter AI mode" in ' +
-      'the builder and gives you the 6-character code shown in its top bar. Call this first.',
+      'Connects to the Anduin landing page builder tab the user opened for AI. The user clicks "Connect your agent" ' +
+      'in the builder and gives you the 6-character code it shows. Call this first.',
     inputSchema: { code: z.string().describe("The 6-character code from the builder, e.g. K7Q2PX") }
   },
   async ({ code }) => reply(bridge.connect(code))

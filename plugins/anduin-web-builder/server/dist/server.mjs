@@ -40380,15 +40380,15 @@ var MAX_PAYLOAD = 8 * 1024 * 1024;
 var HELLO_TIMEOUT_MS = 5e3;
 var CODE = /^[ABCDEFGHJKMNPQRSTUVWXYZ2-9]{6}$/;
 var Text = {
-  notPaired: 'No builder connected. Ask the user to click "Enter AI mode" in the Anduin landing page builder and give you the code shown in its top bar, then call connect_builder.',
-  wrongCode: (code) => `No builder is waiting with code ${code}. Ask the user for the code in the builder's top bar; it changes each time they click "Enter AI mode". If the builder still shows that code, ask the user to click Retry in its top bar.`,
+  notPaired: 'No builder connected. Ask the user to click "Connect your agent" in the Anduin landing page builder and give you the code it shows, then call connect_builder.',
+  wrongCode: (code) => `No builder is waiting with code ${code}. Ask the user for the code the builder shows; it changes each time they click "Connect your agent". If the builder still shows that code, ask the user to click Retry under it.`,
   connected: (title) => `Connected to the builder${title ? ` (page titled ${JSON.stringify(title)})` : ""}. Call list_builder_tools, then call_builder_tool with get_guide and follow it.`,
-  disconnected: `The builder disconnected before replying. The change may or may not have applied: if the builder's top bar still shows a code, call connect_builder with it again (ask the user to click Retry if needed); otherwise ask them to click "Enter AI mode" and give you the new code. Then call read_page.`,
+  disconnected: 'The builder disconnected before replying. The change may or may not have applied: if the builder still shows a code, call connect_builder with it again (ask the user to click Retry if needed); otherwise ask them to click "Connect your agent" and give you the new code. Then call read_page.',
   cancelled: "Cancelled. The builder may still finish the change: call read_page before you retry.",
   portsBusy: `Ports ${PORTS[0]}-${PORTS[PORTS.length - 1]} are all in use, so the builder cannot reach this agent. Ask the user to close another agent session that has the Anduin Web Builder plugin, then restart this one.`,
-  // Shown to the user in the builder's top bar.
-  tooManyTabs: "Too many builder tabs are waiting for an agent. Close some, then exit AI mode and open again.",
-  codeTaken: "That code is already in use. Exit AI mode and open again.",
+  // Shown to the user in the builder's connect dialog.
+  tooManyTabs: "Too many builder tabs are waiting for an agent. Close some, then click Retry.",
+  codeTaken: "That code is already in use. Cancel or exit AI mode, then click Connect your agent again.",
   pluginTooOld: "Your agent's Anduin Web Builder plugin is older than this builder. Update the plugin and restart your agent.",
   builderTooOld: "This builder page is older than your agent's plugin. Reload the page."
 };
@@ -40552,7 +40552,7 @@ var signalOf = (args) => args[args.length - 1]?.signal;
 server.registerTool(
   "connect_builder",
   {
-    description: 'Connects to the Anduin landing page builder tab the user opened for AI. The user clicks "Enter AI mode" in the builder and gives you the 6-character code shown in its top bar. Call this first.',
+    description: 'Connects to the Anduin landing page builder tab the user opened for AI. The user clicks "Connect your agent" in the builder and gives you the 6-character code it shows. Call this first.',
     inputSchema: { code: external_exports.string().describe("The 6-character code from the builder, e.g. K7Q2PX") }
   },
   async ({ code }) => reply(bridge.connect(code))
