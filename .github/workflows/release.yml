@@ -34,6 +34,8 @@ jobs:
           (cd plugins/anduin && zip -qr "$RUNNER_TEMP/assets/anduin-us-$version.zip" .)
           (cd "$RUNNER_TEMP/anduin-eu" && zip -qr "$RUNNER_TEMP/assets/anduin-eu-$version.zip" .)
           scripts/render-guide.sh "$RUNNER_TEMP/assets/Anduin_MCP_Enablement_Guide_Claude.pdf"
+          # Unversioned name: the landing page builder links to releases/latest/download/anduin-web-builder.mcpb.
+          (cd plugins/anduin-web-builder/server && npm run mcpb && mv anduin-web-builder.mcpb "$RUNNER_TEMP/assets/")
       - name: Publish the EU tag
         run: |
           eu="${GITHUB_REF_NAME}-eu"

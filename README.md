@@ -117,10 +117,14 @@ Within each domain, admin includes write and read; write includes read. Renderin
 **Anduin Web Builder** (`anduin-web-builder`) is a separate plugin that lets Claude build and edit your Anduin landing page in the builder tab you have open, while you watch. The plugin runs a small connector on your computer; the builder tab connects to it, and you pair the two with a 6-character code. There is no sign-in and it works in either region, but it needs some setup on your computer:
 
 - Chrome 150 or newer, with WebMCP turned on (`chrome://flags/#enable-webmcp-testing`). The builder's **Build with your AI agent** panel walks you through it.
-- Node.js 20 or newer, from [nodejs.org](https://nodejs.org).
+- Claude Code only: Node.js 20 or newer, from [nodejs.org](https://nodejs.org).
 - AI agent editing turned on for your firm. If the builder doesn't show **Build with your AI agent**, ask your Anduin contact.
 
-Install it from this marketplace: run `/plugin install anduin-web-builder@anduin-marketplace` in Claude Code, or install **Anduin Web Builder** under **Customize → Plugins** in Cowork. Its connector runs on your computer, so it works in Claude Code and in Cowork tasks that run on your computer, with the Claude app open. Cowork tasks that run in the cloud can't reach your browser.
+**Claude Code:** run `/plugin install anduin-web-builder@anduin-marketplace`.
+
+**Cowork:** download [anduin-web-builder.mcpb](https://github.com/anduintransaction/anduin-plugin/releases/latest/download/anduin-web-builder.mcpb) (the builder's **Cowork** tab links to it too), open it, and click **Install**. This desktop extension runs on the Claude app's own Node.js, so Cowork users don't need to install Node; Cowork would start the plugin's connector with your own Node.js instead.
+
+Either way the connector runs on your computer, so it works in Claude Code and in Cowork tasks that run on your computer, with the Claude app open. Cowork tasks that run in the cloud can't reach your browser.
 
 In the builder, click **Open for AI to connect**. The builder enters AI edit mode and shows a code with a **Copy prompt** button. Paste the prompt into Claude, then describe the change you want, for example "Add a team section with our four partners." Nothing is saved until you click **Save** in the builder. Click **Exit AI mode** to take the page back.
 
