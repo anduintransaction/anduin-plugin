@@ -9,8 +9,11 @@ const PORTS = [48811, 48812];
 const tick = () => new Promise((resolve) => setTimeout(resolve, 30));
 
 /** A fake builder tab: connects, says hello, and queues what the server sends. */
-async function tab(port, { code = "ABC234", v = PROTOCOL_VERSION, title = "Home page" } = {}) {
-  const ws = new WebSocket(`ws://127.0.0.1:${port}`);
+async function tab(
+  port,
+  { code = "ABC234", v = PROTOCOL_VERSION, title = "Home page", origin = "https://app.anduin.test" } = {}
+) {
+  const ws = new WebSocket(`ws://127.0.0.1:${port}`, { origin });
   const inbox = [];
   const waiters = [];
   ws.on("message", (data) => {
@@ -268,5 +271,37 @@ test("a result from a tab other than the one the call went to is ignored", async
 
     t.send({ type: "result", id: call.id, text: "real" });
     assert.deepEqual(await outcome, { text: "real" });
+  });
+});
+
+test("the paired tab coming back with its code re-pairs at once, without the agent", async () => {
+  await withBridge({}, async (bridge) => {
+    const first = await tab(bridge.port);
+    bridge.connect("ABC234");
+    await first.next();
+    first.ws.close();
+    await first.closed;
+    await tick();
+    const back = await tab(bridge.port);
+    assert.deepEqual(await back.next(), { type: "paired" });
+    const listed = bridge.listTools();
+    const request = await back.next();
+    back.send({ type: "tools", id: request.id, tools: [] });
+    assert.equal((await listed).text, "[]");
+  });
+});
+
+test("the last code from another site does not re-pair: it waits for the agent like any tab", async () => {
+  await withBridge({}, async (bridge) => {
+    const first = await tab(bridge.port);
+    bridge.connect("ABC234");
+    await first.next();
+    first.ws.close();
+    await first.closed;
+    await tick();
+    const other = await tab(bridge.port, { origin: "https://elsewhere.test" });
+    await tick();
+    assert.equal(other.inbox.length, 0);
+    assert.equal((await bridge.listTools()).text, Text.notPaired);
   });
 });

@@ -40380,10 +40380,10 @@ var MAX_PAYLOAD = 8 * 1024 * 1024;
 var HELLO_TIMEOUT_MS = 5e3;
 var CODE = /^[ABCDEFGHJKMNPQRSTUVWXYZ2-9]{6}$/;
 var Text = {
-  notPaired: 'No builder connected. Ask the user to click "Connect your agent" in the Anduin landing page builder and give you the code it shows, then call connect_builder.',
+  notPaired: 'No builder connected. If you were given a builder code earlier in this conversation, call connect_builder with it again. Otherwise ask the user to click "Connect your agent" in the Anduin landing page builder and give you the code it shows, then call connect_builder.',
   wrongCode: (code) => `No builder is waiting with code ${code}. Ask the user for the code the builder shows; it changes each time they click "Connect your agent". If the builder still shows that code, wait a few seconds and try again: the builder keeps looking for agents.`,
   connected: (title) => `Connected to the builder${title ? ` (page titled ${JSON.stringify(title)})` : ""}. Call list_builder_tools, then call_builder_tool with get_guide and follow it.`,
-  disconnected: `The builder disconnected before replying. The change may or may not have applied: if the builder still shows a code, call connect_builder with it again (wait a few seconds and retry if it isn't found); otherwise ask them to click "Connect your agent" and give you the new code. Then call read_page.`,
+  disconnected: `The builder disconnected before replying. The change may or may not have applied. Call connect_builder again with the code you were given (wait a few seconds and retry if it isn't found); if it still isn't found, ask the user to click "Connect your agent" and give you the new code. Then call read_page.`,
   cancelled: "Cancelled. The builder may still finish the change: call read_page before you retry.",
   portsBusy: `Ports ${PORTS[0]}-${PORTS[PORTS.length - 1]} are all in use, so the builder cannot reach this agent. Ask the user to close another agent session that has the Anduin Web Builder plugin, then restart this one.`,
   // Shown to the user in the builder's connect dialog.
@@ -40404,6 +40404,7 @@ async function startBridge({
   const calls = /* @__PURE__ */ new Map();
   const helloed = /* @__PURE__ */ new WeakSet();
   let paired = null;
+  let last = null;
   let nextId = 1;
   const send = (ws, message) => {
     if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(message));
@@ -40412,7 +40413,9 @@ async function startBridge({
     send(ws, { type: "error", message });
     ws.close(4001, "refused");
   };
-  wss?.on("connection", (ws) => {
+  const origins = /* @__PURE__ */ new WeakMap();
+  wss?.on("connection", (ws, req) => {
+    origins.set(ws, String(req.headers.origin ?? ""));
     ws.on("error", () => {
     });
     const helloTimer = setTimeout(() => ws.close(4002, "no hello"), helloTimeoutMs);
@@ -40445,6 +40448,13 @@ async function startBridge({
       ws.close(4002, "bad code");
       return;
     }
+    if (last?.code === code && last.origin === origins.get(ws)) {
+      const previous = paired;
+      paired = { ws, title: typeof title === "string" ? title.slice(0, 120) : "", code, origin: last.origin };
+      if (previous && previous.ws !== ws) previous.ws.close(4e3, "replaced");
+      send(ws, { type: "paired" });
+      return;
+    }
     if (pending.size >= maxPending) {
       refuse(ws, Text.tooManyTabs);
       return;
@@ -40453,7 +40463,7 @@ async function startBridge({
       refuse(ws, Text.codeTaken);
       return;
     }
-    pending.set(code, { ws, title: typeof title === "string" ? title.slice(0, 120) : "" });
+    pending.set(code, { ws, title: typeof title === "string" ? title.slice(0, 120) : "", origin: origins.get(ws) });
   }
   function answer(ws, message) {
     const call = calls.get(message.id);
@@ -40480,6 +40490,7 @@ async function startBridge({
     pending.delete(code);
     if (paired) paired.ws.close(4e3, "replaced");
     paired = { ...entry, code };
+    last = { code, origin: entry.origin };
     send(entry.ws, { type: "paired" });
     return { text: Text.connected(entry.title) };
   }

@@ -13,8 +13,9 @@ const CODE = /^[ABCDEFGHJKMNPQRSTUVWXYZ2-9]{6}$/;
 
 export const Text = {
   notPaired:
-    'No builder connected. Ask the user to click "Connect your agent" in the Anduin landing page builder and ' +
-    "give you the code it shows, then call connect_builder.",
+    "No builder connected. If you were given a builder code earlier in this conversation, call connect_builder with " +
+    'it again. Otherwise ask the user to click "Connect your agent" in the Anduin landing page builder and give you ' +
+    "the code it shows, then call connect_builder.",
   wrongCode: (code) =>
     `No builder is waiting with code ${code}. Ask the user for the code the builder shows; it changes each ` +
     'time they click "Connect your agent". If the builder still shows that code, wait a few seconds and ' +
@@ -23,9 +24,9 @@ export const Text = {
     `Connected to the builder${title ? ` (page titled ${JSON.stringify(title)})` : ""}. Call list_builder_tools, ` +
     "then call_builder_tool with get_guide and follow it.",
   disconnected:
-    "The builder disconnected before replying. The change may or may not have applied: if the builder still " +
-    "shows a code, call connect_builder with it again (wait a few seconds and retry if it isn't found); otherwise ask " +
-    'them to click "Connect your agent" and give you the new code. Then call read_page.',
+    "The builder disconnected before replying. The change may or may not have applied. Call connect_builder again " +
+    "with the code you were given (wait a few seconds and retry if it isn't found); if it still isn't found, ask " +
+    'the user to click "Connect your agent" and give you the new code. Then call read_page.',
   cancelled: "Cancelled. The builder may still finish the change: call read_page before you retry.",
   portsBusy:
     `Ports ${PORTS[0]}-${PORTS[PORTS.length - 1]} are all in use, so the builder cannot reach this agent. Ask the ` +
@@ -48,7 +49,9 @@ export async function startBridge({
   const pending = new Map(); // code -> { ws, title }
   const calls = new Map(); // id -> { ws, done }
   const helloed = new WeakSet(); // sockets that have sent their one hello
-  let paired = null; // { ws, title, code }
+  let paired = null; // { ws, title, code, origin }
+  // The last pairing outlives its socket, so the same tab coming back after a drop re-pairs without the agent.
+  let last = null; // { code, origin }
   let nextId = 1;
 
   const send = (ws, message) => {
@@ -59,7 +62,10 @@ export async function startBridge({
     ws.close(4001, "refused");
   };
 
-  wss?.on("connection", (ws) => {
+  const origins = new WeakMap(); // socket -> its page's Origin header, which the browser sets and a page can't fake
+
+  wss?.on("connection", (ws, req) => {
+    origins.set(ws, String(req.headers.origin ?? ""));
     // A bad frame (too big, bad UTF-8) makes ws emit 'error', which would crash the process without a listener.
     // 'close' still follows, and gone() answers the socket's in-flight calls.
     ws.on("error", () => {});
@@ -96,6 +102,15 @@ export async function startBridge({
       ws.close(4002, "bad code");
       return;
     }
+    // The tab this agent was paired with, back after a drop: same code, same site. The site check stops a page
+    // elsewhere from guessing its way into a pairing.
+    if (last?.code === code && last.origin === origins.get(ws)) {
+      const previous = paired;
+      paired = { ws, title: typeof title === "string" ? title.slice(0, 120) : "", code, origin: last.origin };
+      if (previous && previous.ws !== ws) previous.ws.close(4000, "replaced");
+      send(ws, { type: "paired" });
+      return;
+    }
     if (pending.size >= maxPending) {
       refuse(ws, Text.tooManyTabs);
       return;
@@ -104,7 +119,7 @@ export async function startBridge({
       refuse(ws, Text.codeTaken);
       return;
     }
-    pending.set(code, { ws, title: typeof title === "string" ? title.slice(0, 120) : "" });
+    pending.set(code, { ws, title: typeof title === "string" ? title.slice(0, 120) : "", origin: origins.get(ws) });
   }
 
   function answer(ws, message) {
@@ -135,6 +150,7 @@ export async function startBridge({
     // One tab at a time: the tab paired before is closed and goes back to waiting with its own code.
     if (paired) paired.ws.close(4000, "replaced");
     paired = { ...entry, code };
+    last = { code, origin: entry.origin };
     send(entry.ws, { type: "paired" });
     return { text: Text.connected(entry.title) };
   }
