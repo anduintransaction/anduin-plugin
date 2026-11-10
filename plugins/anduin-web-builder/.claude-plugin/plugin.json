@@ -1,7 +1,7 @@
 {
   "name": "anduin-web-builder",
-  "version": "0.1.0",
-  "description": "Build and edit your Anduin landing page with Claude while you watch it in Chrome — works with Claude Code and Cowork tasks that run on your computer",
+  "version": "0.2.0",
+  "description": "Build and edit your Anduin landing page with Claude in the builder tab you have open — works with Claude Code and Cowork tasks that run on your computer",
   "author": {
     "name": "Anduin Transactions",
     "url": "https://anduintransact.com"
