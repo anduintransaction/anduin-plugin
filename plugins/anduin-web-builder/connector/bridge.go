@@ -184,8 +184,9 @@ func (b *Bridge) Close() {
 		tabs = append(tabs, t)
 	}
 	b.mu.Unlock()
+	// At once for all: one mid close handshake can hold its CloseNow for seconds.
 	for _, t := range tabs {
-		_ = t.ws.CloseNow()
+		go func() { _ = t.ws.CloseNow() }()
 	}
 }
 
@@ -208,7 +209,7 @@ func (b *Bridge) accept(w http.ResponseWriter, r *http.Request) {
 		b.gone(t)
 	}()
 	for {
-		// A frame over the read limit or bad UTF-8 ends the socket here, and gone() answers its in-flight calls.
+		// A frame over the read limit ends the socket here, and gone() answers its in-flight calls.
 		_, data, err := ws.Read(context.Background())
 		if err != nil {
 			return
@@ -385,10 +386,10 @@ func (b *Bridge) ListTools(ctx context.Context) Result {
 	return Result{Text: indented.String()}
 }
 
-// CallTool runs one of the paired tab's tools.
-func (b *Bridge) CallTool(ctx context.Context, name string, input map[string]any) Result {
-	if input == nil {
-		input = map[string]any{}
+// CallTool runs one of the paired tab's tools with the agent's input, passed through as it came.
+func (b *Bridge) CallTool(ctx context.Context, name string, input json.RawMessage) Result {
+	if len(input) == 0 || string(input) == "null" {
+		input = json.RawMessage("{}")
 	}
 	return b.request(ctx, map[string]any{"type": "call", "tool": name, "input": input}).Result
 }

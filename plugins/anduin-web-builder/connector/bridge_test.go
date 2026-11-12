@@ -35,6 +35,7 @@ type fakeTab struct {
 	t      *testing.T
 	ws     *websocket.Conn
 	inbox  chan map[string]any
+	raw    chan string // the same messages as sent, for tests that check bytes; dropped when full
 	closed chan websocket.StatusCode
 }
 
@@ -50,7 +51,13 @@ func dial(t *testing.T, port int, origin string) *fakeTab {
 	if err != nil {
 		t.Fatalf("dial: %v", err)
 	}
-	f := &fakeTab{t: t, ws: ws, inbox: make(chan map[string]any, 16), closed: make(chan websocket.StatusCode, 1)}
+	f := &fakeTab{
+		t:      t,
+		ws:     ws,
+		inbox:  make(chan map[string]any, 16),
+		raw:    make(chan string, 16),
+		closed: make(chan websocket.StatusCode, 1),
+	}
 	go func() {
 		for {
 			_, data, err := ws.Read(context.Background())
@@ -60,6 +67,10 @@ func dial(t *testing.T, port int, origin string) *fakeTab {
 			}
 			var message map[string]any
 			_ = json.Unmarshal(data, &message)
+			select {
+			case f.raw <- string(data):
+			default:
+			}
 			f.inbox <- message
 		}
 	}()
@@ -214,12 +225,39 @@ func TestRelaysListAndCallAndReturnsTheAnswers(t *testing.T) {
 	}
 
 	calling := async(func() Result {
-		return b.CallTool(context.Background(), "edit_page", map[string]any{"ops": []any{1}})
+		return b.CallTool(context.Background(), "edit_page", json.RawMessage(`{"ops":[1]}`))
 	})
 	c := tab.next()
 	eq(t, []any{c["type"], c["tool"], c["input"]}, []any{"call", "edit_page", map[string]any{"ops": []any{1.0}}})
 	tab.send(map[string]any{"type": "result", "id": c["id"], "text": "Applied 1 op."})
 	eq(t, await(t, calling), Result{Text: "Applied 1 op."})
+}
+
+func TestTheAgentsInputReachesTheTabAsSentWithItsKeyOrder(t *testing.T) {
+	b := startBridge(t, Options{})
+	tab := openTab(t, b.Port())
+	b.Connect("ABC234")
+	tab.next()
+	<-tab.raw // paired
+	input := `{"style":{"marginTop":"8px","margin":"0"}}`
+	calling := async(func() Result { return b.CallTool(context.Background(), "edit_page", json.RawMessage(input)) })
+	c := tab.next()
+	if sent := <-tab.raw; !strings.Contains(sent, `"input":`+input) {
+		t.Fatalf("the tab got %s", sent)
+	}
+	tab.send(map[string]any{"type": "result", "id": c["id"], "text": "ok"})
+	await(t, calling)
+}
+
+func TestClosingTheBridgeAnswersACallInFlight(t *testing.T) {
+	b := startBridge(t, Options{})
+	tab := openTab(t, b.Port())
+	b.Connect("ABC234")
+	tab.next()
+	calling := async(func() Result { return b.CallTool(context.Background(), "update_theme", nil) })
+	tab.next()
+	b.Close()
+	eq(t, await(t, calling), Result{Text: textDisconnected, IsError: true})
 }
 
 func TestAnAgentCancellationReachesTheTabAsCancel(t *testing.T) {

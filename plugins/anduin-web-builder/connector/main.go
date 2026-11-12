@@ -4,6 +4,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
@@ -18,6 +19,7 @@ type connectInput struct {
 	Code string `json:"code" jsonschema:"The 6-character code from the builder, e.g. K7Q2PX"`
 }
 
+// Input is typed for the schema and its check; the tab gets the agent's own bytes (see rawInput).
 type callInput struct {
 	Name  string         `json:"name" jsonschema:"The builder tool's name, from list_builder_tools"`
 	Input map[string]any `json:"input,omitempty" jsonschema:"The tool's input, as an object"`
@@ -42,10 +44,20 @@ func newServer(bridge *Bridge) *mcp.Server {
 		Name: "call_builder_tool",
 		Description: "Runs one of the builder's tools on the connected tab and returns its result. Start with " +
 			"get_guide and follow it.",
-	}, func(ctx context.Context, _ *mcp.CallToolRequest, in callInput) (*mcp.CallToolResult, any, error) {
-		return toolResult(bridge.CallTool(ctx, in.Name, in.Input)), nil, nil
+	}, func(ctx context.Context, req *mcp.CallToolRequest, in callInput) (*mcp.CallToolResult, any, error) {
+		return toolResult(bridge.CallTool(ctx, in.Name, rawInput(req.Params.Arguments))), nil, nil
 	})
 	return server
+}
+
+// The input as the agent sent it. Decoding it into a map and back would sort its keys, and a builder tool may read an
+// object's keys in order.
+func rawInput(arguments json.RawMessage) json.RawMessage {
+	var raw struct {
+		Input json.RawMessage `json:"input"`
+	}
+	_ = json.Unmarshal(arguments, &raw)
+	return raw.Input
 }
 
 func toolResult(r Result) *mcp.CallToolResult {
@@ -61,6 +73,13 @@ func main() {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	// Run waits for calls in flight, and a call can wait on the tab for as long as the user takes. Closing the bridge
+	// on a signal answers them, so the server stops at once; a second signal then ends it the default way.
+	go func() {
+		<-ctx.Done()
+		stop()
+		bridge.Close()
+	}()
 	// Returns when the agent closes stdin, which is how its host ends the server.
 	if err := newServer(bridge).Run(ctx, &mcp.StdioTransport{}); err != nil && ctx.Err() == nil {
 		fmt.Fprintf(os.Stderr, "[anduin-builder] %v\n", err)
