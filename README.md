@@ -122,7 +122,7 @@ Within each domain, admin includes write and read; write includes read. Renderin
 
 **Claude Code:** run `/plugin install anduin-web-builder@anduin-marketplace`.
 
-**Cowork:** download [anduin-web-builder.mcpb](https://github.com/anduintransaction/anduin-plugin/releases/latest/download/anduin-web-builder.mcpb) (the builder's **Cowork** tab links to it too), open it, and click **Install**. This desktop extension runs on the Claude app's own Node.js, so Cowork users don't need to install Node; Cowork would start the plugin's connector with your own Node.js instead.
+**Cowork:** open **Customize → Plugins**, add `anduintransaction/anduin-plugin` as a marketplace, and install **anduin-web-builder**. Cowork starts the plugin's connector with your computer's own Node.js, so install [Node.js](https://nodejs.org/en/download) 20 or newer first.
 
 Either way the connector runs on your computer, so it works in Claude Code and in Cowork tasks that run on your computer, with the Claude app open. Cowork tasks that run in the cloud can't reach your browser.
 
