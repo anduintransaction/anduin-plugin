@@ -21,17 +21,19 @@ jobs:
       - name: EU build succeeds
         run: scripts/build-eu-plugin.sh "$RUNNER_TEMP/anduin-eu" && cat "$RUNNER_TEMP/anduin-eu/.mcp.json"
 
-  web-builder-server:
-    runs-on: ubuntu-latest
+  web-builder-connector:
+    # macOS: build.sh joins the two Mac builds with lipo.
+    runs-on: macos-latest
     defaults:
       run:
-        working-directory: plugins/anduin-web-builder/server
+        working-directory: plugins/anduin-web-builder/connector
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          node-version: 20
-      - run: npm ci
-      - run: npm test
-      - name: Bundle matches source
-        run: npm run build && git diff --exit-code dist/server.mjs
+          go-version-file: plugins/anduin-web-builder/connector/go.mod
+          cache-dependency-path: plugins/anduin-web-builder/connector/go.sum
+      - run: go vet ./...
+      - run: go test -race ./...
+      - name: Packed connector matches source
+        run: ./build.sh && git diff --exit-code ../anduin-builder.mcpb

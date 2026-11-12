@@ -1,10 +1,11 @@
 {
   "name": "anduin-web-builder",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Build and edit your Anduin landing page with Claude in the builder tab you have open — works with Claude Code and Cowork tasks that run on your computer",
   "author": {
     "name": "Anduin Transactions",
     "url": "https://anduintransact.com"
   },
-  "keywords": ["anduin", "landing-page", "webmcp"]
+  "keywords": ["anduin", "landing-page", "webmcp"],
+  "mcpServers": "./anduin-builder.mcpb"
 }

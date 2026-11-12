@@ -4,5 +4,5 @@
 # Rendered customer guide (build with scripts/render-guide.sh)
 docs/*.pdf
 
-# Desktop extension bundle (npm run mcpb in plugins/anduin-web-builder/server)
-*.mcpb
+# Where Claude Code unpacks a plugin's .mcpb when the plugin runs from this folder (--plugin-dir)
+.mcpb-cache/
