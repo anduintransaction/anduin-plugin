@@ -9,6 +9,9 @@ out="$(mktemp -d)"
 trap 'rm -rf "$out"' EXIT
 mkdir -p "$out/bin"
 
+# The output depends on the Go version and these, so they are pinned rather than taken from the environment.
+export GOTOOLCHAIN=go1.27.4 GOFLAGS= GOAMD64=v1 GOARM64=v8.0
+
 build() {
   CGO_ENABLED=0 GOOS="$1" GOARCH="$2" go build -trimpath -buildvcs=false -ldflags="-s -w -buildid=" -o "$3" .
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"slices"
 	"strings"
 	"testing"
@@ -45,4 +46,10 @@ func TestServerListsItsToolsAndRefusesACallBeforePairing(t *testing.T) {
 	if !called.IsError || !strings.HasPrefix(text, "No builder connected") {
 		t.Fatalf("call before pairing: %v %q", called.IsError, text)
 	}
+}
+
+func TestRawInputKeepsTheAgentsBytes(t *testing.T) {
+	eq(t, string(rawInput(json.RawMessage(`{"name":"edit_page","input":{"b":1,"a":{"d":2,"c":3}}}`))),
+		`{"b":1,"a":{"d":2,"c":3}}`)
+	eq(t, rawInput(json.RawMessage(`{"name":"read_page"}`)), json.RawMessage(nil))
 }
