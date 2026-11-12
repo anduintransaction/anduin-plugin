@@ -117,16 +117,15 @@ Within each domain, admin includes write and read; write includes read. Renderin
 **Anduin Web Builder** (`anduin-web-builder`) is a separate plugin that lets Claude build and edit your Anduin landing page in the builder tab you have open, while you watch. The plugin runs a small connector on your computer; the builder tab connects to it, and you pair the two with a 6-character code. There is no sign-in and it works in either region, but it needs some setup on your computer:
 
 - Chrome 150 or newer, with WebMCP turned on (`chrome://flags/#enable-webmcp-testing`). The builder's **Build with your AI agent** panel walks you through it.
-- Claude Code only: Node.js 20 or newer, from [nodejs.org](https://nodejs.org).
 - AI agent editing turned on for your firm. If the builder doesn't show **Build with your AI agent**, ask your Anduin contact.
 
 **Claude Code:** run `/plugin install anduin-web-builder@anduin-marketplace`.
 
-**Cowork:** open **Customize → Plugins**, add `anduintransaction/anduin-plugin` as a marketplace, and install **anduin-web-builder**. Cowork starts the plugin's connector with your computer's own Node.js, so install [Node.js](https://nodejs.org/en/download) 20 or newer first.
+**Cowork:** open **Customize → Plugins**, add `anduintransaction/anduin-plugin` as a marketplace, and install **anduin-web-builder**.
 
-Either way the connector runs on your computer, so it works in Claude Code and in Cowork tasks that run on your computer, with the Claude app open. Cowork tasks that run in the cloud can't reach your browser.
+Either way the connector is a small program that runs on your computer, with nothing else to install, so it works in Claude Code and in Cowork tasks that run on your computer, with the Claude app open. Cowork tasks that run in the cloud can't reach your browser.
 
-In the builder, click the sparkles button in the left rail, then **Connect your agent**. The builder shows a code with a **Copy prompt** button. Paste the prompt into Claude, then describe the change you want, for example "Add a team section with our four partners." The builder enters AI edit mode once Claude connects. Later, after **Exit AI mode** or a reload, **Connect your agent** reconnects to the same Claude session if it's still open, with no new code; choose **Use a different agent** to switch. Nothing is saved until you click **Save** in the builder. Click **Exit AI mode** to take the page back.
+In the builder, click the sparkles button in the left rail, then **Connect your agent**. The builder shows a code with a **Copy prompt** button. Paste the prompt into Claude, then describe the change you want, for example "Add a team section with our four partners." The builder enters AI edit mode once Claude connects. Later, after **Exit AI mode** or a reload, **Connect your agent** reconnects to the same Claude session if it's still open, with no new code; choose **Connect a new session** to switch. Nothing is saved until you click **Save** in the builder. Click **Exit AI mode** to take the page back.
 
 ## Troubleshooting and updates
 
